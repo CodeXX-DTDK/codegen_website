@@ -1,6 +1,6 @@
 ---
 title: Grouping Logic
-description: Reference documentation for grouping.luau scripts — input format, output contract, and routing patterns.
+description: Reference documentation for grouping.luau scripts, input format, output contract, and routing patterns.
 ---
 
 See [Grouping & Fan-in](/concepts/grouping/) for the conceptual overview. This page is the contract reference.
@@ -40,8 +40,8 @@ Every field available on the transformation script's input node is also availabl
 
 | Pattern | Description | Example path expression |
 |---|---|---|
-| 1:1 (default) | Entity → file derived from source path | (omit grouping.luau) |
-| Fan-in | All entities → one file | `"generated/all.cpp"` |
-| Namespace-based | Entity → file named after its top namespace | `entity._namespaces[1] .. "/registry.cpp"` |
-| Annotation-argument | Entity → file named by annotation argument | `entity.annotations[1].arguments[1]` |
+| 1:1 (default) | Entity ☛ file derived from source path | (omit grouping.luau) |
+| Fan-in | All entities ☛ one file | `"generated/all.cpp"` |
+| Namespace-based | Entity ☛ file named after its top namespace | `entity._namespaces[1] .. "/registry.cpp"` |
+| Annotation-argument | Entity ☛ file named by annotation argument | `entity.annotations[1].arguments[1]` |
 | Conditional | Internal vs public routing | `if isInternal then "internal.md" else "public.md"` |

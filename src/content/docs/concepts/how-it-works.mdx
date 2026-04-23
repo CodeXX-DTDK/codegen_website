@@ -1,9 +1,10 @@
 ---
 title: How It Works
-description: A top-down walkthrough of the codegen pipeline — from annotated C++ source to generated output files.
+description: A top-down walkthrough of the codegen pipeline, from annotated C++ source to generated output files.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## The pipeline
 
@@ -15,9 +16,9 @@ graph TD
 
     PP[Preprocessor] -- "Resolve includes, expand macros (light pass)" --> P
 
-    P[Parser] -- "tree-sitter-cpp → raw CST" --> SE
+    P[Parser] -- "tree-sitter-cpp ☛ raw CST" --> SE
 
-    SE[Source Extractor] -- "CST → typed SourceNode AST" --> A
+    SE[Source Extractor] -- "CST ☛ typed SourceNode AST" --> A
 
     A[Analyzer] -- "Resolve namespaces, types, annotations" --> EM
 
@@ -44,7 +45,7 @@ graph TD
 
 **Rules run in isolated LuaU VMs.** Each rule invocation gets a fresh VM with no shared state. Rules cannot communicate with each other, cannot read the filesystem, and cannot retain state between calls.
 
-**The preamble is deduplicated by output path.** When multiple entities route to the same output file (fan-in), the engine calls the preamble once — not once per entity.
+**The preamble is deduplicated by output path.** When multiple entities route to the same output file (fan-in), the engine calls the preamble once, not once per entity.
 
 **Inline injection is positional.** The `inline` list items are injected at the anchor comment that triggered the rule. The anchor comment is replaced in the output header.
 
@@ -54,9 +55,9 @@ graph TD
 - It does not evaluate `constexpr`. Values are represented as their source text.
 - It does not resolve cross-header type relationships beyond namespace context. Each entity is processed with the namespace stack available at the point of declaration.
 
-<Aside type="tip" title="Key Takeaways">
-- The pipeline is: collect → parse → extract → analyze → match → group → preamble → transform → write.
+<Alert type="info" title="Key Takeaways">
+- The pipeline is: collect ☛ parse ☛ extract ☛ analyze ☛ match ☛ group ☛ preamble ☛ transform ☛ write.
 - Rules are pure functions over a JSON AST node. No side effects, no shared state.
 - The preamble runs once per unique output path, regardless of entity count.
 - Inline injection replaces anchor comments in the original header.
-</Aside>
+</Alert>

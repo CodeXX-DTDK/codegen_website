@@ -3,11 +3,12 @@ title: VS Code DAP Debugger
 description: Set breakpoints in LuaU rule scripts and step through execution in VS Code using the Debug Adapter Protocol.
 ---
 
-import { Aside, Steps } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
-<Aside type="note">
+<Alert type="info">
 The VS Code DAP debugger is a **Professional tier** feature.
-</Aside>
+</Alert>
 
 ## Overview
 
@@ -63,11 +64,11 @@ When paused inside the transformation script, expand the `node` variable in the 
 
 - The debugger attaches to a single rule run. It does not support multi-rule sessions.
 - Breakpoints in `preamble.luau` and `grouping.luau` are supported.
-- Hot-reload (editing the script while paused) is not supported — restart the debug session after edits.
+- Hot-reload (editing the script while paused) is not supported, restart the debug session after edits.
 
-<Aside type="tip" title="Key Takeaways">
-- The debugger uses DAP — no custom protocol, no port to configure. Works with the standard VS Code debug UI.
+<Alert type="info" title="Key Takeaways">
+- The debugger uses DAP, no custom protocol, no port to configure. Works with the standard VS Code debug UI.
 - Inspect `node` directly in the Variables panel to understand the AST shape for a specific entity.
 - Breakpoints work in transformation, preamble, and grouping scripts.
 - Requires Professional tier license.
-</Aside>
+</Alert>

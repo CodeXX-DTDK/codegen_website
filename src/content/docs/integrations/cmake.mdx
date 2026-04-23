@@ -3,11 +3,11 @@ title: CMake Integration
 description: Wire codegen rules into your CMake build graph so generated files regenerate automatically when annotated headers change.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
-<Aside type="note">
+<Alert type="info">
 CMake integration is a **Team tier** feature.
-</Aside>
+</Alert>
 
 ## Overview
 
@@ -52,11 +52,11 @@ codegen_rule(RULE MarkdownDocs CONFIG ... INPUT_DIR ... OUTPUT_DIR ...)
 
 ## CI usage
 
-In CI, run CMake as normal. The `codegen` binary must be on `PATH` or discoverable via `codegen_ROOT`. Generated files checked into version control will be overwritten if they are out of date — which is the intended behavior.
+In CI, run CMake as normal. The `codegen` binary must be on `PATH` or discoverable via `codegen_ROOT`. Generated files checked into version control will be overwritten if they are out of date, which is the intended behavior.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - `codegen_rule()` creates a CMake target that tracks header-to-generated-file dependencies.
 - Generated files are exposed via `CODEGEN_OUTPUTS` for `target_sources()`.
 - The "forgot to regenerate" CI failure class is eliminated: CMake handles it.
 - Requires Team tier license.
-</Aside>
+</Alert>

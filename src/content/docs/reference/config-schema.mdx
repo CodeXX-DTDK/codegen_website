@@ -6,21 +6,21 @@ description: Complete reference for the codegen rule configuration file format.
 ## Top-level structure
 
 ```yaml
-version: 1                # required — must be 1
+version: 1                # required, must be 1
 
 output:
-  language: cpp           # required — output language hint
+  language: cpp           # required, output language hint
   autoDeduceIncludes: false
-  outputDirectory: ""     # optional — override default output path
-  outputNameTemplate: ""  # optional — override output filename pattern
+  outputDirectory: ""     # optional, override default output path
+  outputNameTemplate: ""  # optional, override output filename pattern
 
 permissions:              # optional
   http:
     allowlist:
       - "example.com"
 
-preamble_lib: ""          # optional — Team tier: shared preamble module path
-grouping_lib: ""          # optional — Team tier: shared grouping module path
+preamble_lib: ""          # optional, Team tier: shared preamble module path
+grouping_lib: ""          # optional, Team tier: shared grouping module path
 ```
 
 ## `output.language`
@@ -56,7 +56,7 @@ Default: `{{.InputDir}}/{{.InputFile}}.g.cpp`
 
 ## `permissions.http.allowlist`
 
-List of domain names (no protocol, no path) that the rule's `http.get()` call is permitted to reach. Subdomains must be listed explicitly — there is no wildcard support.
+List of domain names (no protocol, no path) that the rule's `http.get()` call is permitted to reach. Subdomains must be listed explicitly, there is no wildcard support.
 
 ## `preamble_lib` and `grouping_lib`
 

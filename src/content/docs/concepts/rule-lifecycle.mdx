@@ -1,15 +1,15 @@
 ---
 title: Rule Lifecycle
-description: The sequence of script invocations for a single rule run — grouping, preamble, and transformation phases.
+description: The sequence of script invocations for a single rule run, grouping, preamble, and transformation phases.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
-## Phase 1 — Entity collection
+## Phase 1: Entity collection
 
 The engine walks the input directory and builds a list of entities that match the current rule. Matching is by annotation (`[[codegen::RuleName]]`) or anchor comment (`// [[codegen::generated::RuleName::...]]`).
 
-## Phase 2 — Grouping (optional)
+## Phase 2: Grouping (optional)
 
 If a `RuleName.grouping.luau` exists, the engine calls it once with the full entity list:
 
@@ -18,9 +18,9 @@ input:  JSON { entities: [...all matched entities...] }
 output: JSON { "registryId1": "path/to/output.cpp", "registryId2": "path/to/other.cpp", ... }
 ```
 
-Without a grouping script, routing defaults to 1:1 — each entity maps to an output path derived from its source file path.
+Without a grouping script, routing defaults to 1:1, each entity maps to an output path derived from its source file path.
 
-## Phase 3 — Preamble
+## Phase 3: Preamble
 
 For each unique output path (as determined by grouping), the engine calls `RuleName.preamble.luau` once:
 
@@ -29,7 +29,7 @@ input:  JSON {}   (reserved for future use)
 output: string    (raw text, prepended to the output file)
 ```
 
-## Phase 4 — Transformation
+## Phase 4: Transformation
 
 The engine calls `RuleName.luau` once per matched entity, in the order determined by grouping:
 
@@ -38,10 +38,10 @@ input:  JSON { ...single entity AST node... }
 output: JSON { source: "...", inline: [...] }
 ```
 
-- `source` — text appended to the entity's assigned output file.
-- `inline` — list of `{ source: "..." }` objects injected at the anchor site in the original header.
+- `source`: text appended to the entity's assigned output file.
+- `inline`: list of `{ source: "..." }` objects injected at the anchor site in the original header.
 
-## Phase 5 — File write
+## Phase 5: File write
 
 The engine assembles each output file (preamble + concatenated entity sources) and writes them. For each entity that returned `inline` items, the original header is patched at the anchor comment.
 
@@ -54,11 +54,11 @@ If any script call raises a Lua error, the engine:
 3. Continues processing remaining entities.
 4. Exits with a non-zero status code after all entities are processed.
 
-This means a single bad entity does not abort the entire run — useful during incremental rule development.
+This means a single bad entity does not abort the entire run, useful during incremental rule development.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Grouping runs once with all entities. Preamble runs once per unique output path. Transformation runs once per entity.
 - A rule with no grouping script uses 1:1 routing.
-- Script errors are per-entity — one failure does not abort the run.
+- Script errors are per-entity, one failure does not abort the run.
 - The `inline` return field patches the original header at the anchor comment.
-</Aside>
+</Alert>

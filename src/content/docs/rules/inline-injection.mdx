@@ -3,11 +3,11 @@ title: Inline Injection
 description: How the inline field injects declarations back into original C++ headers at anchor comment sites.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## The problem it solves
 
-For rules that generate function implementations (`.g.cpp`), you typically also need the declaration in the original header. Without inline injection, you must manually add the declaration — which defeats the purpose of generation and breaks whenever the generated signature changes.
+For rules that generate function implementations (`.g.cpp`), you typically also need the declaration in the original header. Without inline injection, you must manually add the declaration, which defeats the purpose of generation and breaks whenever the generated signature changes.
 
 Inline injection lets the rule emit both the implementation and the declaration, keeping them in sync automatically.
 
@@ -48,7 +48,7 @@ inline = {
 
 ## What gets replaced
 
-The entire anchor comment line is replaced. The declaration it annotates is preserved — the engine only modifies the comment line itself.
+The entire anchor comment line is replaced. The declaration it annotates is preserved, the engine only modifies the comment line itself.
 
 ## Without inline injection
 
@@ -60,10 +60,10 @@ return json.encode({ source = impl })
 return json.encode({ source = impl, inline = {} })
 ```
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - The `inline` field injects text into the original header at the anchor comment site.
 - The anchor comment line is replaced by the injected text.
 - The declaration the anchor annotates is preserved.
 - Multiple `inline` items replace the single anchor line with multiple lines in order.
 - Omit `inline` or return `{}` for rules that write to `.g.cpp` only.
-</Aside>
+</Alert>

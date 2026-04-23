@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Complete reference for the codegen command-line interface — flags, modes, and exit codes.
+description: Complete reference for the codegen command-line interface, flags, modes, and exit codes.
 ---
 
 ## Synopsis
@@ -27,21 +27,21 @@ codegen [OPTIONS] --config <path> --input <dir> [--output <dir>]
 | `--jobs <n>` | CPU count | Parallel parse workers |
 | `--cache-dir <path>` | `.codegen/cache` | Persistent cache directory (Professional+) |
 | `--no-cache` | off | Disable persistent cache |
-| `--version` | — | Print version and exit |
+| `--version` |, | Print version and exit |
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| `0` | Success — all entities processed, all files written |
-| `1` | Partial failure — one or more entity transforms errored |
-| `2` | Fatal error — config invalid, input directory not found, etc. |
-| `3` | License error — feature requires a higher tier |
+| `0` | Success, all entities processed, all files written |
+| `1` | Partial failure, one or more entity transforms errored |
+| `2` | Fatal error, config invalid, input directory not found, etc. |
+| `3` | License error, feature requires a higher tier |
 
 ## Examples
 
 ```sh
-# Dry run — inspect output without writing
+# Dry run, inspect output without writing
 codegen --config .codegen/rules/ToString/ToString.config.yaml \
         --input ./include \
         --dry-run

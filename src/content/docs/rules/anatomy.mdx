@@ -1,9 +1,10 @@
 ---
 title: Rule Anatomy
-description: The four files that make up a codegen rule — config, preamble, grouping, and transformation — and the contract each must satisfy.
+description: The four files that make up a codegen rule, config, preamble, grouping, and transformation, and the contract each must satisfy.
 ---
 
-import { FileTree, Aside } from '@astrojs/starlight/components';
+import { FileTree } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 A rule is a directory containing up to four files:
 
@@ -15,7 +16,7 @@ A rule is a directory containing up to four files:
   - RuleName.grouping.luau  *(optional)* Output path router
 </FileTree>
 
-The directory name, the config filename, and the script filename must all match exactly — case-sensitive.
+The directory name, the config filename, and the script filename must all match exactly, case-sensitive.
 
 ## `RuleName.config.yaml`
 
@@ -35,10 +36,10 @@ Full schema: see [Config Schema Reference](/reference/config-schema/).
 The transformation script. Receives one AST entity as JSON, returns JSON with `source` and optionally `inline`.
 
 **Contract:**
-- Input: `json.decode(input)` → Lua table (one entity)
+- Input: `json.decode(input)` ☛ Lua table (one entity)
 - Output: `json.encode({ source = "...", inline = { {source="..."}, ... } })`
 - Must not raise an error on any valid entity (validate defensively)
-- Must be a pure function — no global state, no I/O
+- Must be a pure function, no global state, no I/O
 
 ## `RuleName.preamble.luau`
 
@@ -46,14 +47,14 @@ Optional. Runs once per unique output file before any transformation output.
 
 **Contract:**
 - Input: JSON string (currently always `"{}"`)
-- Output: raw string (not JSON) — prepended to the output file verbatim
+- Output: raw string (not JSON), prepended to the output file verbatim
 
 ## `RuleName.grouping.luau`
 
 Optional. Runs once with all matched entities. Returns a routing map.
 
 **Contract:**
-- Input: `json.decode(input)` → `{ entities: [...] }`
+- Input: `json.decode(input)` ☛ `{ entities: [...] }`
 - Output: `json.encode({ [registryId] = "output/path.cpp", ... })`
 - Every entity in the input must appear in the output map
 - Paths are relative to the `--output` directory
@@ -75,10 +76,10 @@ enum class MyEnum { A, B, C };
 
 The qualified path in anchor comments (`qualified::EnumName`) is passed to the script via the entity's metadata and controls the generated function's qualified name.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Four files: `config.yaml` (required), transformation `.luau` (required), `preamble.luau` (optional), `grouping.luau` (optional).
 - All files must use the same name prefix matching the directory name.
 - The transformation script is a pure function: JSON in, JSON out, no side effects.
 - The preamble returns a raw string (not JSON).
-- The grouping script returns a `registryId → outputPath` JSON map covering every matched entity.
-</Aside>
+- The grouping script returns a `registryId ☛ outputPath` JSON map covering every matched entity.
+</Alert>

@@ -1,11 +1,12 @@
 ---
 title: Your First Rule
-description: Write a rule from scratch — a struct-to-JSON-serializer generator.
+description: Write a rule from scratch, a struct-to-JSON-serializer generator.
 ---
 
-import { Steps, Aside, FileTree } from '@astrojs/starlight/components';
+import { Steps, FileTree } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
-This guide writes a new rule — `JsonSerializer` — that generates a `toJson()` function for each annotated struct. It covers the three script files every rule needs and the config that ties them together.
+This guide writes a new rule, `JsonSerializer`, that generates a `toJson()` function for each annotated struct. It covers the three script files every rule needs and the config that ties them together.
 
 ## Goal
 
@@ -42,9 +43,9 @@ nlohmann::json toJson(const AppConfig& v) {
   - JsonSerializer.luau
 </FileTree>
 
-No `grouping.luau` — this rule uses 1:1 routing (one struct → one `.g.cpp` file).
+No `grouping.luau`, this rule uses 1:1 routing (one struct ☛ one `.g.cpp` file).
 
-## Step 1 — config
+## Step 1: config
 
 ```yaml title="JsonSerializer.config.yaml"
 version: 1
@@ -56,7 +57,7 @@ output:
 
 `autoDeduceIncludes: false` means the engine will not attempt to infer `#include` lines. The preamble handles that explicitly.
 
-## Step 2 — preamble
+## Step 2: preamble
 
 ```lua title="JsonSerializer.preamble.luau"
 return function(input)
@@ -64,9 +65,9 @@ return function(input)
 end
 ```
 
-The preamble runs once per output file. With 1:1 routing (no grouping script), "once per output file" means once per input header — which is what you want.
+The preamble runs once per output file. With 1:1 routing (no grouping script), "once per output file" means once per input header, which is what you want.
 
-## Step 3 — transformation
+## Step 3: transformation
 
 ```lua title="JsonSerializer.luau"
 return function(input)
@@ -104,9 +105,9 @@ return function(input)
 end
 ```
 
-The `inline` list injects `decl` at the anchor site in the original header — keeping the declaration in the header and the implementation in the `.g.cpp` file.
+The `inline` list injects `decl` at the anchor site in the original header, keeping the declaration in the header and the implementation in the `.g.cpp` file.
 
-## Step 4 — run
+## Step 4: run
 
 ```sh
 codegen \
@@ -115,10 +116,10 @@ codegen \
   --output ./generated
 ```
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Every rule has three files: `config.yaml`, `preamble.luau`, and the transformation `.luau` script.
 - The transformation script receives one AST node as JSON and returns `{ source, inline }`.
 - `source` goes to the `.g.cpp` file. `inline` items are injected at anchor sites in the original header.
-- No grouping script = 1:1 routing: one annotated entity → one output file derived from the input path.
+- No grouping script = 1:1 routing: one annotated entity ☛ one output file derived from the input path.
 - The LuaU sandbox provides only `json.encode` and `json.decode`. All logic is explicit and auditable.
-</Aside>
+</Alert>

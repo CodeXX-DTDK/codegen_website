@@ -3,34 +3,39 @@ title: Installation
 description: Download and verify the codegen binary for your platform.
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
+import Tabs from "@pelagornis/page/components/Tabs.astro";
 
 ## Download
 
 codegen ships as a single self-contained binary. No runtime dependencies. No installer.
 
-<Tabs>
-  <TabItem label="Linux (x86_64)">
+<Tabs tabs={[
+  { id: "tab1", label: "Linux (x64)" },
+  { id: "tab2", label: "macOS (arm64)" },
+  { id: "tab3", label: "Windows (x64)" }
+]} defaultTab="tab1">
+  <div>
     ```sh
     curl -L https://releases.codegen.dev/latest/codegen-linux-x86_64 -o codegen
     chmod +x codegen
     sudo mv codegen /usr/local/bin/
     ```
-  </TabItem>
-  <TabItem label="macOS (arm64)">
+  </div>
+  <div>
     ```sh
     curl -L https://releases.codegen.dev/latest/codegen-macos-arm64 -o codegen
     chmod +x codegen
     sudo mv codegen /usr/local/bin/
     ```
-  </TabItem>
-  <TabItem label="Windows (x64)">
+  </div>
+  <div>
     ```powershell
     Invoke-WebRequest -Uri https://releases.codegen.dev/latest/codegen-windows-x64.exe -OutFile codegen.exe
     # Move to a directory on your PATH, e.g.:
     Move-Item codegen.exe C:\tools\codegen.exe
     ```
-  </TabItem>
+  </div>
 </Tabs>
 
 ## Verify the checksum
@@ -63,8 +68,8 @@ codegen license activate <your-license-key>
 Activation stores a signed token locally. No subsequent internet access required.
 See [License Activation](/licensing/activation/) for offline and air-gapped options.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Single binary. No runtime. No installer.
 - Always verify the SHA-256 checksum before running.
 - Community tier requires no activation. Professional and Team use offline-verifiable signed tokens.
-</Aside>
+</Alert>

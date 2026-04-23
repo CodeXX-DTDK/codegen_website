@@ -3,23 +3,24 @@ title: codegen
 description: A C++ code generation engine. LuaU rules, sandboxed execution, deterministic output.
 template: splash
 hero:
-  tagline: C++ AST → anything. Scripted in LuaU. Sandboxed by design.
+  tagline: The Scriptable Meta-Programming Engine C++ And It's Community Deserve
   actions:
     - text: Quick Start
       link: /getting-started/quick-start/
       icon: right-arrow
       variant: primary
-    - text: View on GitHub
-      link: https://github.com/willy-vvu/codex
+    - text: Help us improve codegen
+      link: https://tally.so/r/1AbdKM
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid, Badge } from '@astrojs/starlight/components';
+import { CardGrid } from '@astrojs/starlight/components';
+import Card from '@pelagornis/page/components/Card.astro';
 
 <div style="text-align: center; margin: 2rem 0 3rem;">
 
-**codegen** is a production-grade C++ code generation engine. You annotate structs and enums directly in source. You write a LuaU script that receives a structured AST node as JSON and emits whatever you want — C++, TypeScript, Markdown, SQL. The engine handles the rest: parsing, scheduling, deduplication, inline injection, and file routing.
+**codegen** is a production-grade C++ code generation engine. You annotate structs and enums directly in source. You write a LuaU script that receives a structured AST node as JSON and emits whatever you want, C++, TypeScript, Markdown, SQL. The engine handles the rest: parsing, scheduling, deduplication, inline injection, and file routing.
 
 It ships as a single binary. It calls nothing home. It runs the same on every machine.
 
@@ -28,24 +29,24 @@ It ships as a single binary. It calls nothing home. It runs the same on every ma
 ## What separates it from the alternatives
 
 <CardGrid>
-  <Card title="Not Clang plugins" icon="warning">
+  <Card title="Not Clang plugins">
     Clang plugins require a matching compiler version, link against unstable APIs,
-    and can panic your build. codegen rules are **LuaU scripts** — no compiler coupling,
+    and can panic your build. codegen rules are **LuaU scripts:** no compiler coupling,
     no ABI fragility, hot-swappable at any time.
   </Card>
-  <Card title="Not template engines" icon="warning">
+  <Card title="Not template engines">
     Jinja2 and Mustache are dumb string renderers. They cannot reason about your type
     system, your namespace hierarchy, or your template arguments. codegen rules receive
-    a **fully-resolved AST node** — every type, every qualifier, every annotation.
+    a **fully-resolved AST node:** every type, every qualifier, every annotation.
   </Card>
-  <Card title="Not reflection libraries" icon="warning">
+  <Card title="Not reflection libraries">
     Runtime reflection adds overhead and forces you to ship introspection code.
     codegen generates **at build time**. The output is plain source. Zero runtime cost.
     Zero dependencies added to your library.
   </Card>
-  <Card title="Not a macro system" icon="warning">
+  <Card title="Not a macro system">
     Macros expand in-place, break debuggers, and make error messages unreadable.
-    codegen emits **separate `.g.cpp` files** — fully navigable, fully debuggable,
+    codegen emits **separate `.g.cpp` files:** fully navigable, fully debuggable,
     diffable in version control.
   </Card>
 </CardGrid>
@@ -55,35 +56,35 @@ It ships as a single binary. It calls nothing home. It runs the same on every ma
 ## Core capabilities
 
 <CardGrid>
-  <Card title="Deterministic output" icon="approve-check">
-    Same source → same output. Always. The engine is a pure function over your AST.
+  <Card title="Deterministic output">
+    Same source ☛ same output. Always. The engine is a pure function over your AST.
     Generated files are stable across machines and CI runs, making diffs meaningful
     and code review tractable.
   </Card>
-  <Card title="Non-1:1 generation" icon="random">
+  <Card title="Non-1:1 generation">
     Most generators emit one output file per input file. **codegen does not require this.**
-    A `grouping.luau` script routes each matched entity to any output path — fan-in
+    A `grouping.luau` script routes each matched entity to any output path, fan-in
     dozens of structs into a single `api-reference.md`, or fan-out one entity into
     multiple files. The topology is yours to define.
   </Card>
-  <Card title="LLM-ready AST schema" icon="puzzle">
+  <Card title="LLM-ready AST schema">
     The C++ AST is fully serialized as JSON before any rule sees it. This means your
     rules are testable without a compiler, inspectable with `jq`, and the same schema
-    is exposed via the **MCP server** — making codegen a native substrate for
+    is exposed via the **MCP server:** making codegen a native substrate for
     LLM-driven code intelligence pipelines.
   </Card>
-  <Card title="Isolated execution" icon="shield">
+  <Card title="Isolated execution">
     LuaU runs in a sandboxed VM. Rules have **no filesystem access, no network access,
-    no process spawning** — unless you explicitly grant permissions in the config.
+    no process spawning:** unless you explicitly grant permissions in the config.
     A malicious rule in a third-party library cannot exfiltrate your source code.
   </Card>
-  <Card title="Inline injection" icon="pencil">
-    Rules can emit a `source` (to a `.g.cpp` file) and an `inline` list — declarations
+  <Card title="Inline injection">
+    Rules can emit a `source` (to a `.g.cpp` file) and an `inline` list, declarations
     injected **back into the original header** at a designated anchor comment. This
     enables keeping declarations and implementations in sync without manual effort.
   </Card>
-  <Card title="Self-hosted" icon="star">
-    codegen generates parts of its own infrastructure. The tool eats its own cooking —
+  <Card title="Self-hosted">
+    codegen generates parts of its own infrastructure. The tool eats its own cooking,
     which means every feature you use has already been tested against a 100k+ LoC
     real-world codebase.
   </Card>
@@ -128,8 +129,8 @@ codegen --config .codegen/rules/ToString/ToString.config.yaml --input ./include
 
 Output, written to `color.g.cpp`:
 
-```cpp title="color.g.cpp" "// generated — do not edit"
-// generated — do not edit
+```cpp title="color.g.cpp" "// generated - do not edit"
+// generated - do not edit
 #include <string_view>
 
 std::string_view toString(Color e) {
@@ -147,7 +148,7 @@ std::string_view toString(Color e) {
 ## Licensing
 
 <CardGrid>
-  <Card title="Community" icon="open-book">
+  <Card title="Community">
     **Free forever**
 
     For open-source projects and personal exploration.
@@ -158,27 +159,27 @@ std::string_view toString(Color e) {
 
     _No commercial use._
   </Card>
-  <Card title="Professional" icon="laptop">
+  <Card title="Professional">
     **$7 / month · Individual**
 
     For solo developers building commercial software.
 
     - Everything in Community
-    - **TUI diff viewer** — review generated changes before applying
-    - **VS Code DAP debugger** — step through LuaU rules in the editor
-    - **Local persistence** — rule output caching across runs
+    - **TUI diff viewer:** review generated changes before applying
+    - **VS Code DAP debugger:** step through LuaU rules in the editor
+    - **Local persistence:** rule output caching across runs
 
     _Pays for itself if it saves you 10 minutes of debugging per month._
   </Card>
-  <Card title="Team" icon="group">
+  <Card title="Team">
     **$24 / seat / month · Organization**
 
     For engineering teams that ship at scale.
 
     - Everything in Professional
-    - **CMake integration** — rules run as part of the build graph
-    - **Shared preamble & grouping libraries** — version-control your org's conventions
-    - **Priority support** — direct response SLA
+    - **CMake integration:** rules run as part of the build graph
+    - **Shared preamble & grouping libraries:** version-control your org's conventions
+    - **Priority support:** direct response SLA
 
     _The CMake integration alone eliminates the "forgot to regenerate" class of CI failures._
   </Card>
@@ -186,6 +187,6 @@ std::string_view toString(Color e) {
 
 <div style="text-align: center; margin: 2rem 0;">
 
-[Compare tiers in detail →](/licensing/tiers/)
+[Compare tiers in detail ☛](/licensing/tiers/)
 
 </div>

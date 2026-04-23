@@ -1,472 +1,381 @@
 ---
-// Static page — no server runtime needed.
+import StandaloneLayout from '../layouts/StandaloneLayout.astro'
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pricing — codegen</title>
-    <meta name="description" content="Simple, predictable pricing for codegen. Free for open-source. Paid for teams that ship." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <style>
-      /* ── Reset & tokens ────────────────────────────────────────── */
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<StandaloneLayout
+  title="Pricing — codegen"
+  description="Simple, predictable pricing for codegen. Free for open-source. Paid for teams that ship."
+  activeNav="pricing"
+>
+  <style>
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: var(--page-space-20) var(--page-space-6) var(--page-space-12);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: var(--page-space-4);
+      color: var(--page-text);
+    }
+    .hero p {
+      color: var(--page-text-muted);
+      font-size: 1.1rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
 
-      :root {
-        --bg:        #0f111a;
-        --bg-card:   #181b27;
-        --bg-hi:     #1e2235;
-        --border:    #2a2e42;
-        --text:      #e2e5ef;
-        --muted:     #8891b0;
-        --accent:    #7c7cff;
-        --accent-hi: #a0a0ff;
-        --green:     #4ade80;
-        --radius:    12px;
-        --sans:      system-ui, -apple-system, sans-serif;
-        --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-      }
+    /* Tier grid */
+    .tiers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--page-space-6);
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 var(--page-space-6) var(--page-space-20);
+    }
 
-      @media (prefers-color-scheme: light) {
-        :root {
-          --bg:       #f8f9ff;
-          --bg-card:  #ffffff;
-          --bg-hi:    #eef0fc;
-          --border:   #d8dbee;
-          --text:     #1a1d30;
-          --muted:    #5c6080;
-          --accent:   #4b4bff;
-          --accent-hi:#6666ff;
-        }
-      }
+    .tier {
+      background: var(--page-bg-secondary);
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius-xl);
+      padding: var(--page-space-8);
+      display: flex;
+      flex-direction: column;
+      gap: var(--page-space-6);
+      position: relative;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .tier:hover { transform: translateY(-2px); box-shadow: var(--page-shadow-md); }
 
-      body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--sans);
-        font-size: 16px;
-        line-height: 1.6;
-        min-height: 100vh;
-      }
+    .tier.highlight {
+      background: var(--page-bg-elevated);
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 1px var(--blue-500), var(--page-shadow-lg);
+    }
+    .tier.highlight::before {
+      content: 'Most popular';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--blue-500);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.75rem;
+      border-radius: var(--page-radius-full);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
 
-      /* ── Nav ───────────────────────────────────────────────────── */
-      nav {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid var(--border);
-        position: sticky;
-        top: 0;
-        background: var(--bg);
-        z-index: 10;
-      }
-      .nav-logo {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text);
-        text-decoration: none;
-        letter-spacing: -0.02em;
-      }
-      .nav-logo span { color: var(--accent); }
-      nav ul {
-        display: flex;
-        list-style: none;
-        gap: 2rem;
-      }
-      nav a {
-        color: var(--muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.15s;
-      }
-      nav a:hover { color: var(--text); }
-      nav a.active { color: var(--accent); }
+    /* Tier card internals */
+    .tier-header { display: flex; align-items: center; gap: var(--page-space-2); }
+    .tier-icon { width: 1.4rem; height: 1.4rem; object-fit: contain; flex-shrink: 0; }
+    :global([data-theme="dark"]) .tier-icon,
+    :global([data-theme="dark"]) .special-card-icon { filter: invert(1); }
 
-      /* ── Hero ──────────────────────────────────────────────────── */
-      .hero {
-        text-align: center;
-        padding: 5rem 1.5rem 3rem;
-      }
-      .hero h1 {
-        font-size: clamp(2rem, 5vw, 3.2rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        line-height: 1.15;
-        margin-bottom: 1rem;
-      }
-      .hero p {
-        color: var(--muted);
-        font-size: 1.15rem;
-        max-width: 520px;
-        margin: 0 auto;
-      }
+    .tier-price { display: flex; align-items: baseline; gap: var(--page-space-1); }
+    .price-amount {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--page-text);
+    }
+    .price-period { color: var(--page-text-muted); font-size: 0.9rem; }
 
-      /* ── Tier grid ─────────────────────────────────────────────── */
-      .tiers {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 1.5rem 5rem;
-      }
+    .tier-desc { color: var(--page-text-muted); font-size: 0.875rem; line-height: 1.5; }
 
-      .tier {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        position: relative;
-        transition: border-color 0.15s, transform 0.15s;
-      }
-      .tier:hover { transform: translateY(-2px); }
-      .tier.highlight {
-        border-color: var(--accent);
-        background: var(--bg-hi);
-      }
-      .tier.highlight::before {
-        content: 'Most popular';
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--accent);
-        color: #fff;
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.2rem 0.8rem;
-        border-radius: 99px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
+    .features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--page-space-2);
+      flex: 1;
+    }
+    .features-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--page-space-2);
+      font-size: 0.875rem;
+      color: var(--page-text-secondary);
+    }
+    .features-list li .check { color: var(--page-success); flex-shrink: 0; margin-top: 2px; }
+    .features-list li .dash  { color: var(--page-border-strong); flex-shrink: 0; margin-top: 2px; }
 
-      .tier-name {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--muted);
-      }
-      .tier.highlight .tier-name { color: var(--accent); }
+    .tier .page-button { width: 100%; justify-content: center; }
 
-      .tier-price {
-        display: flex;
-        align-items: baseline;
-        gap: 0.25rem;
-      }
-      .price-amount {
-        font-size: 2.5rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-      }
-      .price-period {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
+    .tier-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--page-text-muted);
+      margin-top: calc(-1 * var(--page-space-3));
+    }
 
-      .tier-desc {
-        color: var(--muted);
-        font-size: 0.9rem;
-        line-height: 1.5;
-      }
+    /* Error toast */
+    #checkout-error {
+      display: none;
+      position: fixed;
+      bottom: var(--page-space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--page-error);
+      color: #fff;
+      padding: var(--page-space-3) var(--page-space-6);
+      border-radius: var(--page-radius-lg);
+      font-size: 0.875rem;
+      z-index: 100;
+      box-shadow: var(--page-shadow-lg);
+    }
 
-      .features-list {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        flex: 1;
-      }
-      .features-list li {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.5rem;
-        font-size: 0.9rem;
-      }
-      .features-list li .check {
-        color: var(--green);
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-      .features-list li .dash {
-        color: var(--border);
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
+    /* Special cases */
+    .special-cases {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 var(--page-space-6) var(--page-space-20);
+    }
+    .special-cases h2 {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--page-text-muted);
+      margin-bottom: var(--page-space-6);
+    }
+    .special-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--page-space-4);
+    }
+    @media (max-width: 560px) { .special-cards { grid-template-columns: 1fr; } }
 
-      /* ── CTA buttons ───────────────────────────────────────────── */
-      .tier-form { display: contents; }
+    .special-card {
+      background: var(--page-bg-secondary);
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius-xl);
+      padding: var(--page-space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--page-space-3);
+    }
+    .special-card-icon { width: 2rem; height: 2rem; object-fit: contain; }
+    .special-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--page-text); }
+    .special-card p { font-size: 0.85rem; color: var(--page-text-muted); line-height: 1.5; flex: 1; }
+    .special-card .page-button { width: 100%; justify-content: center; margin-top: var(--page-space-1); }
 
-      .btn {
-        display: block;
-        width: 100%;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        text-align: center;
-        text-decoration: none;
-        transition: opacity 0.15s, transform 0.1s;
-      }
-      .btn:active { transform: scale(0.98); }
-      .btn-primary {
-        background: var(--accent);
-        color: #fff;
-      }
-      .btn-primary:hover { opacity: 0.88; }
-      .btn-outline {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--text);
-      }
-      .btn-outline:hover { border-color: var(--muted); }
+    /* ── FAQ ───────────────────────────────────────────────────── */
+    .faq {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 var(--page-space-6) var(--page-space-20);
+    }
+    .faq h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: var(--page-space-8);
+      letter-spacing: -0.02em;
+      color: var(--page-text);
+    }
+    details { border-top: 1px solid var(--page-border); padding: var(--page-space-4) 0; }
+    details:last-child { border-bottom: 1px solid var(--page-border); }
+    summary {
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--page-text);
+    }
+    summary::after { content: '+'; font-size: 1.1rem; color: var(--page-text-muted); }
+    details[open] summary::after { content: '−'; }
+    details p {
+      margin-top: var(--page-space-3);
+      color: var(--page-text-muted);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    details a { color: var(--page-info); text-decoration: none; }
+    details a:hover { text-decoration: underline; }
+  </style>
 
-      .btn[aria-busy='true'] { opacity: 0.7; cursor: wait; }
+  <section class="hero">
+    <h1>Simple, predictable pricing.</h1>
+    <p>Free for open-source projects. Upgrade when you need commercial use, the diff TUI, or team tooling.</p>
+  </section>
 
-      .tier-note {
-        text-align: center;
-        font-size: 0.78rem;
-        color: var(--muted);
-        margin-top: -0.5rem;
-      }
+  <div class="tiers">
 
-      /* ── Error toast ───────────────────────────────────────────── */
-      #checkout-error {
-        display: none;
-        position: fixed;
-        bottom: 1.5rem;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #ff4040;
-        color: #fff;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        z-index: 100;
-      }
-
-      /* ── FAQ ───────────────────────────────────────────────────── */
-      .faq {
-        max-width: 680px;
-        margin: 0 auto;
-        padding: 0 1.5rem 5rem;
-      }
-      .faq h2 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin-bottom: 2rem;
-        letter-spacing: -0.02em;
-      }
-      details {
-        border-top: 1px solid var(--border);
-        padding: 1rem 0;
-      }
-      details:last-child { border-bottom: 1px solid var(--border); }
-      summary {
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 0.95rem;
-        user-select: none;
-        list-style: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      summary::after {
-        content: '+';
-        font-size: 1.2rem;
-        color: var(--muted);
-      }
-      details[open] summary::after { content: '−'; }
-      details p {
-        margin-top: 0.75rem;
-        color: var(--muted);
-        font-size: 0.9rem;
-        line-height: 1.6;
-      }
-      details a { color: var(--accent); text-decoration: none; }
-      details a:hover { text-decoration: underline; }
-
-      /* ── Footer ────────────────────────────────────────────────── */
-      footer {
-        border-top: 1px solid var(--border);
-        text-align: center;
-        padding: 2rem;
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-      footer a { color: var(--muted); }
-    </style>
-  </head>
-  <body>
-    <nav>
-      <a href="/" class="nav-logo">code<span>gen</span></a>
-      <ul>
-        <li><a href="/docs">Docs</a></li>
-        <li><a href="/pricing" class="active">Pricing</a></li>
-        <li><a href="/activate">Activate</a></li>
+    <!-- Community -->
+    <article class="tier">
+      <div class="tier-header">
+        <img src="/community_icon.png" alt="" class="tier-icon" />
+        <span class="page-badge page-badge-default">Community</span>
+      </div>
+      <div class="tier-price">
+        <span class="price-amount">$0</span>
+        <span class="price-period">/ forever</span>
+      </div>
+      <p class="tier-desc">For open-source projects and personal exploration.</p>
+      <ul class="features-list">
+        <li><span class="check">✓</span> Core code generation engine</li>
+        <li><span class="check">✓</span> All LuaU rule authoring features</li>
+        <li><span class="check">✓</span> Unlimited source files</li>
+        <li><span class="dash">–</span> Commercial use</li>
+        <li><span class="dash">–</span> Interactive diff viewer</li>
+        <li><span class="dash">–</span> VS Code DAP debugger</li>
+        <li><span class="dash">–</span> Local persistence</li>
       </ul>
-    </nav>
+      <a href="/getting-started/installation" class="page-button page-button-default page-button-lg">
+        Get started free
+      </a>
+    </article>
 
-    <section class="hero">
-      <h1>Simple, predictable pricing.</h1>
-      <p>Free for open-source projects. Upgrade when you need commercial use, the diff TUI, or team tooling.</p>
-    </section>
+    <!-- Professional -->
+    <article class="tier highlight">
+      <div class="tier-header">
+        <img src="/pro_icon.png" alt="" class="tier-icon" />
+        <span class="page-badge" style="background:var(--blue-500);border-color:var(--blue-500);color:#fff;">Professional</span>
+      </div>
+      <div class="tier-price">
+        <span class="price-amount">$7</span>
+        <span class="price-period">/ month</span>
+      </div>
+      <p class="tier-desc">For individuals shipping commercial products with codegen.</p>
+      <ul class="features-list">
+        <li><span class="check">✓</span> Everything in Community</li>
+        <li><span class="check">✓</span> Commercial use</li>
+        <li><span class="check">✓</span> Interactive diff viewer (TUI)</li>
+        <li><span class="check">✓</span> VS Code DAP debugger</li>
+        <li><span class="check">✓</span> Local persistence</li>
+        <li><span class="check">✓</span> Up to 5 machines</li>
+        <li><span class="dash">–</span> CMake integration</li>
+      </ul>
+      <button class="page-button page-button-lg" id="btn-professional" style="background:var(--blue-500);border-color:var(--blue-500);color:#fff;">
+        Buy Professional
+      </button>
+      <p class="tier-note">Billed monthly · cancel anytime</p>
+    </article>
 
-    <div class="tiers">
+    <!-- Team -->
+    <article class="tier">
+      <div class="tier-header">
+        <img src="/team_icon.png" alt="" class="tier-icon" />
+        <span class="page-badge page-badge-default">Team</span>
+      </div>
+      <div class="tier-price">
+        <span class="price-amount">$24</span>
+        <span class="price-period">/ seat / month</span>
+      </div>
+      <p class="tier-desc">For teams that want CMake integration, shared preamble libs, and priority support.</p>
+      <ul class="features-list">
+        <li><span class="check">✓</span> Everything in Professional</li>
+        <li><span class="check">✓</span> CMake integration</li>
+        <li><span class="check">✓</span> Shared preamble libraries</li>
+        <li><span class="check">✓</span> Priority support</li>
+        <li><span class="check">✓</span> Up to 5 machines per seat</li>
+      </ul>
+      <button class="page-button page-button-default page-button-lg" id="btn-team">
+        Buy Team
+      </button>
+      <p class="tier-note">Billed monthly · cancel anytime</p>
+    </article>
 
-      <!-- Community -->
-      <article class="tier">
-        <div class="tier-name">Community</div>
-        <div class="tier-price">
-          <span class="price-amount">$0</span>
-          <span class="price-period">/ forever</span>
-        </div>
-        <p class="tier-desc">For open-source projects and personal exploration.</p>
-        <ul class="features-list">
-          <li><span class="check">✓</span> Core code generation engine</li>
-          <li><span class="check">✓</span> All LuaU rule authoring features</li>
-          <li><span class="check">✓</span> Unlimited source files</li>
-          <li><span class="dash">–</span> Commercial use</li>
-          <li><span class="dash">–</span> Interactive diff viewer</li>
-          <li><span class="dash">–</span> VS Code DAP debugger</li>
-          <li><span class="dash">–</span> Local persistence</li>
-        </ul>
-        <a href="/docs/getting-started/installation" class="btn btn-outline">Get started free</a>
-      </article>
+  </div>
 
-      <!-- Professional (highlighted) -->
-      <article class="tier highlight">
-        <div class="tier-name">Professional</div>
-        <div class="tier-price">
-          <span class="price-amount">$7</span>
-          <span class="price-period">/ month</span>
-        </div>
-        <p class="tier-desc">For individuals shipping commercial products with codegen.</p>
-        <ul class="features-list">
-          <li><span class="check">✓</span> Everything in Community</li>
-          <li><span class="check">✓</span> Commercial use</li>
-          <li><span class="check">✓</span> Interactive diff viewer (TUI)</li>
-          <li><span class="check">✓</span> VS Code DAP debugger</li>
-          <li><span class="check">✓</span> Local persistence</li>
-          <li><span class="check">✓</span> Up to 5 machines</li>
-          <li><span class="dash">–</span> CMake integration</li>
-        </ul>
-        <button class="btn btn-primary" data-tier="professional" id="btn-professional">
-          Buy Professional
-        </button>
-        <p class="tier-note">Billed monthly · cancel anytime</p>
-      </article>
+  <section class="special-cases">
+    <h2>Different situation?</h2>
+    <div class="special-cards">
 
-      <!-- Team -->
-      <article class="tier">
-        <div class="tier-name">Team</div>
-        <div class="tier-price">
-          <span class="price-amount">$24</span>
-          <span class="price-period">/ seat / month</span>
-        </div>
-        <p class="tier-desc">For teams that want CMake integration, shared preamble libs, and priority support.</p>
-        <ul class="features-list">
-          <li><span class="check">✓</span> Everything in Professional</li>
-          <li><span class="check">✓</span> CMake integration</li>
-          <li><span class="check">✓</span> Shared preamble libraries</li>
-          <li><span class="check">✓</span> Priority support</li>
-          <li><span class="check">✓</span> Up to 5 machines per seat</li>
-        </ul>
-        <button class="btn btn-outline" data-tier="team" id="btn-team">
-          Buy Team
-        </button>
-        <p class="tier-note">Billed monthly · cancel anytime</p>
-      </article>
+      <div class="special-card">
+        <img src="/open_source_icon.png" alt="" class="special-card-icon" />
+        <h3>I'm an Open Source Maintainer</h3>
+        <p>If your project is open source and publicly available, you may qualify for a free Professional license. Tell us about your project and we'll sort you out.</p>
+        <a href="/contact?type=opensource" class="page-button page-button-default page-button-md">Apply for a free license</a>
+      </div>
+
+      <div class="special-card">
+        <img src="/enterprise_icon.png" alt="" class="special-card-icon" />
+        <h3>We're an Enterprise</h3>
+        <p>Large team, air-gapped environment, or need a custom contract? We offer volume pricing, self-hosted validation, and priority SLAs.</p>
+        <a href="/contact?type=enterprise" class="page-button page-button-default page-button-md">Talk to us</a>
+      </div>
 
     </div>
+  </section>
 
-    <section class="faq">
-      <h2>Frequently asked questions</h2>
+  <section class="faq">
+    <h2>Frequently asked questions</h2>
 
-      <details>
-        <summary>What counts as "commercial use"?</summary>
-        <p>Any use of codegen in a product or service that generates revenue — including internal tools at a company — requires a Professional or Team license. Open-source projects with no revenue are covered by the Community tier.</p>
-      </details>
+    <details>
+      <summary>What counts as "commercial use"?</summary>
+      <p>Any use of codegen in a product or service that generates revenue — including internal tools at a company — requires a Professional or Team license. Open-source projects with no revenue are covered by the Community tier.</p>
+    </details>
 
-      <details>
-        <summary>How does machine activation work?</summary>
-        <p>After purchasing, you'll receive a license key. Run <code>codegen license activate &lt;key&gt;</code> on each machine you want to use. Professional allows up to 5 machines; you can deactivate any time with <code>codegen license deactivate</code>.</p>
-      </details>
+    <details>
+      <summary>How does machine activation work?</summary>
+      <p>After purchasing, you'll receive a license key. Run <code>codegen license activate &lt;key&gt;</code> on each machine you want to use. Professional allows up to 5 machines; you can deactivate any time with <code>codegen license deactivate</code>.</p>
+    </details>
 
-      <details>
-        <summary>What happens if the license server is unreachable?</summary>
-        <p>codegen caches a signed token locally after activation. Professional licenses cache for 14 days; the tool keeps working offline throughout that window. See <a href="/docs/licensing/activation">License Activation</a> for details.</p>
-      </details>
+    <details>
+      <summary>What happens if the license server is unreachable?</summary>
+      <p>codegen caches a signed token locally after activation. Professional licenses cache for 14 days; the tool keeps working offline throughout that window. See <a href="/licensing/activation">License Activation</a> for details.</p>
+    </details>
 
-      <details>
-        <summary>Can I upgrade or cancel?</summary>
-        <p>Yes — both tiers are billed monthly and can be cancelled at any time. Upgrades take effect immediately. Cancellations run until the end of the billing period.</p>
-      </details>
+    <details>
+      <summary>Can I upgrade or cancel?</summary>
+      <p>Yes — both tiers are billed monthly and can be cancelled at any time. Upgrades take effect immediately. Cancellations run until the end of the billing period.</p>
+    </details>
 
-      <details>
-        <summary>Do you offer annual pricing or discounts?</summary>
-        <p>Annual billing and team discounts are available — <a href="mailto:hello@codegen.dev">contact us</a> and we'll sort you out.</p>
-      </details>
-    </section>
+    <details>
+      <summary>Do you offer annual pricing or discounts?</summary>
+      <p>Annual billing and team discounts are available — <a href="/contact">contact us</a> and we'll sort you out.</p>
+    </details>
+  </section>
 
-    <footer>
-      <p>© 2025 codegen · <a href="/docs">Docs</a> · <a href="/activate">Activate license</a></p>
-    </footer>
+  <div id="checkout-error" role="alert"></div>
 
-    <div id="checkout-error" role="alert"></div>
+  <script>
+    const errorEl = document.getElementById('checkout-error')!
 
-    <script>
-      const errorEl = document.getElementById('checkout-error')
+    function showError(msg: string) {
+      errorEl.textContent = msg
+      errorEl.style.display = 'block'
+      setTimeout(() => { errorEl.style.display = 'none' }, 5000)
+    }
 
-      function showError(msg) {
-        errorEl.textContent = msg
-        errorEl.style.display = 'block'
-        setTimeout(() => { errorEl.style.display = 'none' }, 5000)
+    async function handleCheckout(tier: string, btn: HTMLButtonElement) {
+      btn.setAttribute('aria-busy', 'true')
+      btn.disabled = true
+      const original = btn.textContent
+      btn.textContent = 'Redirecting…'
+
+      try {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier }),
+        })
+        const data = await res.json() as { url?: string; error?: string }
+        if (!res.ok || !data.url) throw new Error(data.error ?? 'Checkout failed. Please try again.')
+        window.location.href = data.url
+      } catch (err: any) {
+        showError(err.message ?? 'Something went wrong.')
+        btn.removeAttribute('aria-busy')
+        btn.disabled = false
+        btn.textContent = original
       }
+    }
 
-      async function handleCheckout(tier, btn) {
-        btn.setAttribute('aria-busy', 'true')
-        btn.disabled = true
-        const originalText = btn.textContent
-        btn.textContent = 'Redirecting…'
-
-        try {
-          const res = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tier }),
-          })
-          const data = await res.json()
-
-          if (!res.ok || !data.url) {
-            throw new Error(data.error ?? 'Checkout failed. Please try again.')
-          }
-
-          window.location.href = data.url
-        } catch (err) {
-          showError(err.message ?? 'Something went wrong.')
-          btn.removeAttribute('aria-busy')
-          btn.disabled = false
-          btn.textContent = originalText
-        }
-      }
-
-      document.getElementById('btn-professional').addEventListener('click', (e) => {
-        handleCheckout('professional', e.currentTarget)
-      })
-
-      document.getElementById('btn-team').addEventListener('click', (e) => {
-        handleCheckout('team', e.currentTarget)
-      })
-    </script>
-  </body>
-</html>
+    document.getElementById('btn-professional')!.addEventListener('click', (e) => {
+      handleCheckout('professional', e.currentTarget as HTMLButtonElement)
+    })
+    document.getElementById('btn-team')!.addEventListener('click', (e) => {
+      handleCheckout('team', e.currentTarget as HTMLButtonElement)
+    })
+  </script>
+</StandaloneLayout>

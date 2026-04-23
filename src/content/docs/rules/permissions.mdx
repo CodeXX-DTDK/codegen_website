@@ -1,9 +1,9 @@
 ---
 title: Permissions Model
-description: How to grant rules access to HTTP — and why the default is to grant nothing.
+description: How to grant rules access to HTTP, and why the default is to grant nothing.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## Default: zero permissions
 
@@ -36,12 +36,12 @@ The permissions model is extensible. Planned future capabilities:
 | `fs.read` | Planned | Read-only access to specific paths |
 | `subprocess` | Not planned | Will never be added |
 
-<Aside type="caution">
+<Alert type="warning">
 Only grant HTTP permissions to rules you have written and audited. An HTTP allowlist gives that rule the ability to send your AST data to the allowlisted domain.
-</Aside>
+</Alert>
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Default: zero permissions. No way to reach the network or filesystem without explicit config.
-- HTTP access requires a named domain allowlist — there is no allow-all.
+- HTTP access requires a named domain allowlist, there is no allow-all.
 - The permissions model is opt-in and declared in the config file, making security review straightforward: look at the config, not the script.
-</Aside>
+</Alert>

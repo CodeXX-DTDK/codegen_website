@@ -3,7 +3,8 @@ title: Quick Start
 description: Generate your first C++ enum-to-string function in under five minutes.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 This guide walks through the `ToString` built-in example: annotating a C++ enum and generating a `std::string_view toString()` function from it.
 
@@ -67,8 +68,8 @@ The engine walked `./include`, found `color.h`, parsed it into a full AST, and m
 
 Read [Your First Rule](/getting-started/first-rule/) to write a rule from scratch instead of using a built-in.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Anchor comments (`// [[codegen::generated::RuleName::...]]`) target anchor-based rules at a specific location.
 - Attribute annotations (`[[codegen::RuleName]]`) are the alternative trigger for struct/class-level rules.
 - The engine writes `.g.cpp` files. Add them to your build; do not edit them manually.
-</Aside>
+</Alert>

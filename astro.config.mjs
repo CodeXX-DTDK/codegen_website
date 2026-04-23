@@ -3,6 +3,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import mermaid from "astro-mermaid";
 import vercel from "@astrojs/vercel";
+import pagePlugin from "@pelagornis/page";
 
 // https://astro.build/config
 export default defineConfig({
@@ -17,15 +18,9 @@ export default defineConfig({
       title: "codegen",
       description:
         "A C++ code generation engine. LuaU rules, sandboxed execution, deterministic output.",
-      social: [
-        {
-          icon: "github",
-          label: "GitHub",
-          href: "https://github.com/willy-vvu/codex",
-        },
-      ],
+      plugins: [pagePlugin()],
       sidebar: [
-        // ── Getting Started ────────────────────────────────────────────
+        // Getting Started
         {
           label: "Getting Started",
           items: [
@@ -35,7 +30,7 @@ export default defineConfig({
             { label: "Your First Rule", slug: "getting-started/first-rule" },
           ],
         },
-        // ── Core Concepts ──────────────────────────────────────────────
+        // Core Concepts
         {
           label: "Core Concepts",
           items: [
@@ -46,7 +41,7 @@ export default defineConfig({
             { label: "Preamble System", slug: "concepts/preamble" },
           ],
         },
-        // ── The Rule System ────────────────────────────────────────────
+        // The Rule System
         {
           label: "Rule System",
           items: [
@@ -58,7 +53,7 @@ export default defineConfig({
             { label: "Permissions Model", slug: "rules/permissions" },
           ],
         },
-        // ── Examples ──────────────────────────────────────────────────
+        // Examples
         {
           label: "Examples",
           items: [
@@ -73,7 +68,7 @@ export default defineConfig({
             },
           ],
         },
-        // ── Integrations ───────────────────────────────────────────────
+        // Integrations
         {
           label: "Integrations",
           items: [
@@ -86,7 +81,7 @@ export default defineConfig({
             { label: "MCP Server", slug: "integrations/mcp-server" },
           ],
         },
-        // ── Safety & Trust ─────────────────────────────────────────────
+        // Safety & Trust
         {
           label: "Safety & Trust",
           items: [
@@ -96,7 +91,7 @@ export default defineConfig({
             { label: "Supply Chain", slug: "trust/supply-chain" },
           ],
         },
-        // ── Licensing ─────────────────────────────────────────────────
+        // Licensing
         {
           label: "Licensing",
           items: [
@@ -104,14 +99,14 @@ export default defineConfig({
             { label: "License Activation", slug: "licensing/activation" },
           ],
         },
-        // ── Reference ─────────────────────────────────────────────────
+        // Reference
         {
           label: "Reference",
           items: [
             { label: "Config Schema (.yaml)", slug: "reference/config-schema" },
-            { label: "AST Node Types", slug: "reference/ast-nodes" },
             { label: "LuaU Globals", slug: "reference/luau-globals" },
             { label: "Diagnostic Codes", slug: "reference/diagnostics" },
+            { label: "AST Schemas", autogenerate: { directory: "reference/schemas" } },
           ],
         },
       ],

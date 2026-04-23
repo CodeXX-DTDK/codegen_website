@@ -1,40 +1,32 @@
 ---
 title: Tiers & Pricing
-description: codegen licensing tiers — Community, Professional, and Team. Feature breakdown and guidance on which tier fits your use case.
+description: codegen licensing tiers, Community, Professional, and Team. Feature breakdown and guidance on which tier fits your use case.
 ---
 
-import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
+import Card from '@pelagornis/page/components/Card.astro';
 
 ## Overview
 
-codegen is available in three tiers. All tiers use the same binary and the same rule engine — the tier controls which features are unlocked, not which version of the engine you run.
+codegen is available in three tiers. All tiers use the same binary and the same rule engine, the tier controls which features are unlocked, not which version of the engine you run.
 
----
+<br/>
 
-## Community — Free
+<Card title="Community: Free">
 
 **For:** Open-source projects, personal experiments, evaluation.
 
 **License:** Free, no time limit. No commercial use.
 
-| Feature | Included |
-|---|---|
-| CLI interface (`codegen` binary) | ✓ |
-| Full rule engine (LuaU sandbox, grouping, preamble, inline injection) | ✓ |
-| All built-in example rules (ToString, TypeScriptTypes, MarkdownDocs) | ✓ |
-| Community support via GitHub Issues | ✓ |
-| Commercial use | ✗ |
-| TUI diff viewer | ✗ |
-| VS Code DAP debugger | ✗ |
-| CMake integration | ✗ |
+</Card>
 
-<Aside type="note">
+<Alert type="info">
 The Community tier includes the full rule engine. There are no artificial rule count limits, no watermarks in generated output, and no expiry. The only restriction is commercial use.
-</Aside>
+</Alert>
 
----
+<br/>
 
-## Professional — $7 / month
+<Card title="Professional: $7 / month">
 
 **For:** Individual developers building commercial software.
 
@@ -66,11 +58,13 @@ The engine caches parsed AST data and rule outputs across runs. On a 200-header 
 
 Persistence is stored in `.codegen/cache/`. Add it to `.gitignore`. The cache is content-addressed and safe to delete at any time.
 
-**Value proposition:** If Professional saves you 10 minutes of debugging per month — one misgenerated file caught by the diff viewer, one rule bug stepped through in the debugger — it costs less than the time you saved.
+**Value proposition:** If Professional saves you 10 minutes of debugging per month, one misgenerated file caught by the diff viewer, one rule bug stepped through in the debugger, it costs less than the time you saved.
 
----
+</Card>
 
-## Team — $24 / seat / month
+<br/>
+
+<Card title="Team: $24 / seat / month">
 
 **For:** Engineering organizations that ship production software.
 
@@ -99,7 +93,7 @@ When a header is modified, CMake detects the dependency and re-runs the relevant
 
 ### Shared preamble and grouping libraries
 
-Teams frequently need the same grouping logic across multiple rules — e.g., "always route to the directory named after the entity's top-level namespace." The Team tier supports a `preamble_lib` and `grouping_lib` config key, pointing to shared LuaU modules that can be `require`d from any rule in the workspace:
+Teams frequently need the same grouping logic across multiple rules, e.g., "always route to the directory named after the entity's top-level namespace." The Team tier supports a `preamble_lib` and `grouping_lib` config key, pointing to shared LuaU modules that can be `require`d from any rule in the workspace:
 
 ```yaml title=".codegen/rules/MyRule/MyRule.config.yaml"
 version: 1
@@ -117,7 +111,7 @@ Version-control these libraries alongside your rules. Code review them. Reuse th
 
 Direct response SLA. Bug reports from Team customers are triaged within one business day.
 
----
+</Card>
 
 ## Comparison table
 
@@ -147,15 +141,7 @@ Yes. A seat is per-person, not per-machine.
 The engine reverts to Community-tier behavior. Your rules, configs, and generated files are unaffected.
 
 **Is there an academic or OSS project discount?**
-OSS projects (public repository, OSI-approved license) can request a Professional license at no cost. Contact [support] with a link to your repository.
+OSS projects (public repository, OSI-approved license) can request a Professional license at no cost. Contact [support](mailto:example@gmail.com) with a link to your repository.
 
 **Can the Team tier be used in air-gapped environments?**
 Yes. See [License Activation](/licensing/activation/) for the offline activation protocol.
-
-<Aside type="tip" title="Key Takeaways">
-- All tiers use the same binary and the same rule engine. Tiers unlock features, not capabilities.
-- Community is free forever but excludes commercial use.
-- Professional ($7/mo) adds the diff viewer and VS Code debugger — the tools that make rule development fast.
-- Team ($24/seat/mo) adds CMake integration (eliminates "forgot to regenerate" CI failures) and shared grouping/preamble libraries.
-- Licenses are verified offline via a cryptographically signed local token. No internet required at runtime.
-</Aside>

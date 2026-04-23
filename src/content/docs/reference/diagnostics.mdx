@@ -1,6 +1,6 @@
 ---
 title: Diagnostic Codes
-description: Engine error and warning codes — what they mean and how to resolve them.
+description: Engine error and warning codes, what they mean and how to resolve them.
 ---
 
 ## Error codes
@@ -8,7 +8,7 @@ description: Engine error and warning codes — what they mean and how to resolv
 | Code | Message | Resolution |
 |---|---|---|
 | `E001` | Config file not found | Check `--config` path |
-| `E002` | Config version unsupported | Update codegen binary — config uses a newer schema |
+| `E002` | Config version unsupported | Update codegen binary, config uses a newer schema |
 | `E003` | Rule script not found | Verify script filename matches the config basename |
 | `E004` | Grouping script missing entity | Add all entity `registryId`s to the grouping output map |
 | `E005` | Grouping output path escapes output directory | Use a relative path without `..` components |
@@ -27,9 +27,9 @@ description: Engine error and warning codes — what they mean and how to resolv
 
 | Code | Message | Notes |
 |---|---|---|
-| `W001` | Entity matched but produced empty output | Rule returned `{ source = "" }` — may be intentional |
+| `W001` | Entity matched but produced empty output | Rule returned `{ source = "" }`, may be intentional |
 | `W002` | Preamble returned empty string | May be intentional for some output languages |
-| `W003` | Generated file unchanged — skipping write | Informational; not an error |
+| `W003` | Generated file unchanged, skipping write | Informational; not an error |
 | `W004` | Anchor comment site not found for inline injection | The anchor comment may have been removed or moved |
 
 ## Reading error output

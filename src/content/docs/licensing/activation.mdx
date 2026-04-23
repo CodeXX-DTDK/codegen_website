@@ -3,7 +3,8 @@ title: License Activation
 description: How to activate Professional and Team licenses, including offline and air-gapped activation.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## Online activation
 
@@ -12,7 +13,7 @@ codegen license activate <your-license-key>
 # License activated. Tier: Professional. Machine: hostname.
 ```
 
-This stores a cryptographically signed token at `~/.config/codegen/license.token` (Linux/macOS) or `%APPDATA%\codegen\license.token` (Windows). All subsequent verification is local — no internet access required after activation.
+This stores a cryptographically signed token at `~/.config/codegen/license.token` (Linux/macOS) or `%APPDATA%\codegen\license.token` (Windows). All subsequent verification is local, no internet access required after activation.
 
 ## Offline activation
 
@@ -38,12 +39,12 @@ For machines without internet access:
 
 ## Token format
 
-License tokens are Ed25519-signed JSON objects. The engine verifies the signature against the embedded public key at startup — no network call, no server round-trip.
+License tokens are Ed25519-signed JSON objects. The engine verifies the signature against the embedded public key at startup, no network call, no server round-trip.
 
 The token contains:
 - Licensed tier
-- Expiry (if applicable — perpetual licenses have no expiry field)
-- Machine binding (optional — some licenses are machine-bound, others are floating)
+- Expiry (if applicable, perpetual licenses have no expiry field)
+- Machine binding (optional, some licenses are machine-bound, others are floating)
 
 ## Revoking a license
 
@@ -57,9 +58,9 @@ This deletes the local token. The license seat becomes available for activation 
 
 Team licenses are managed via the team dashboard. Seat assignment, revocation, and audit logs are available there. Individual team members activate with the same `codegen license activate <key>` command using the team key.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Activation stores a signed token locally. All verification after activation is offline.
-- Offline/air-gapped activation uses a fingerprint-exchange flow — no continuous internet access needed.
-- Tokens are Ed25519-signed against an embedded public key — no server round-trip at runtime.
+- Offline/air-gapped activation uses a fingerprint-exchange flow, no continuous internet access needed.
+- Tokens are Ed25519-signed against an embedded public key, no server round-trip at runtime.
 - `codegen license deactivate` releases the seat for use on another machine.
-</Aside>
+</Alert>

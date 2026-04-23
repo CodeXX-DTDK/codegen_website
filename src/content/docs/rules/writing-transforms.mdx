@@ -1,9 +1,9 @@
 ---
 title: Writing Transforms
-description: Practical patterns for transformation scripts — type mapping, string building, defensive validation, and testing.
+description: Practical patterns for transformation scripts, type mapping, string building, defensive validation, and testing.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## Structure of a transformation script
 
@@ -58,7 +58,7 @@ end
 
 ## Namespace qualification
 
-Always build the qualified name from `_namespaces` — do not assume the unqualified name is unique:
+Always build the qualified name from `_namespaces`, do not assume the unqualified name is unique:
 
 ```lua
 local function qualifiedName(node)
@@ -70,7 +70,7 @@ end
 
 ## Building multi-line output
 
-Use a lines table and `table.concat` — string concatenation in a loop is O(n²) in Lua:
+Use a lines table and `table.concat`, string concatenation in a loop is O(n²) in Lua:
 
 ```lua
 local lines = {}
@@ -85,7 +85,7 @@ local source = table.concat(lines, "\n")
 
 ## Testing a rule offline
 
-Rules are pure functions — test them without running the engine:
+Rules are pure functions, test them without running the engine:
 
 ```lua title="test_my_rule.luau" {1}
 -- Run with: luau test_my_rule.luau
@@ -122,12 +122,12 @@ end
 
 **Returning plain text instead of JSON:** The transformation script must return `json.encode({...})`. Returning a plain string causes a parse error in the engine.
 
-**Mutating the input table:** LuaU tables are shared by reference within a single invocation. Do not mutate `node` — build new tables for your output.
+**Mutating the input table:** LuaU tables are shared by reference within a single invocation. Do not mutate `node`, build new tables for your output.
 
-<Aside type="tip" title="Key Takeaways">
-- Scripts are pure functions: decode → extract → build → encode. No side effects.
-- Build qualified names from `_namespaces` — never assume uniqueness of unqualified names.
-- Use `table.concat` for multi-line output — not string concatenation in a loop.
+<Alert type="info" title="Key Takeaways">
+- Scripts are pure functions: decode ☛ extract ☛ build ☛ encode. No side effects.
+- Build qualified names from `_namespaces`, never assume uniqueness of unqualified names.
+- Use `table.concat` for multi-line output, not string concatenation in a loop.
 - Handle both `"Variable"` and `"VariableGroup"` member kinds.
 - Return value must always be `json.encode({source = "...", inline = {...}})`, never a plain string.
-</Aside>
+</Alert>

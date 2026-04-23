@@ -3,7 +3,7 @@ title: Introduction
 description: Why codegen exists, and why existing tools fall short for modern C++ teams.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## The problem with C++ code generation today
 
@@ -25,9 +25,9 @@ Jinja2, Mustache, or a hand-rolled regex scanner. Fast to start, brittle in prac
 
 codegen separates the problem into two clean layers:
 
-1. **Parsing** — handled by the engine. The full C++ AST, resolved and serialized to JSON, including namespaces, template arguments, member variables, enumerators, and annotations.
+1. **Parsing**: handled by the engine. The full C++ AST, resolved and serialized to JSON, including namespaces, template arguments, member variables, enumerators, and annotations.
 
-2. **Transformation** — handled by you, in LuaU. Your rule receives one AST node as JSON and returns output text. The rule has no knowledge of the file system, no side effects, and no compiler coupling.
+2. **Transformation**: handled by you, in LuaU. Your rule receives one AST node as JSON and returns output text. The rule has no knowledge of the file system, no side effects, and no compiler coupling.
 
 This separation has three consequences:
 
@@ -53,12 +53,12 @@ This is the capability that makes codegen qualitatively different from any templ
 
 ## Self-hosted
 
-codegen generates parts of its own infrastructure. The same rule system you use to generate your serialization layer is the system used to generate codegen's own internal glue code. This means every feature in the rule system is tested against a production codebase — not a toy example.
+codegen generates parts of its own infrastructure. The same rule system you use to generate your serialization layer is the system used to generate codegen's own internal glue code. This means every feature in the rule system is tested against a production codebase, not a toy example.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Clang plugins and template engines are both wrong abstractions for the same reason: one couples to the compiler, the other cannot reason about types.
 - codegen's two-layer model (engine parses, rule transforms) decouples AST access from transformation logic.
-- The `grouping.luau` script enables non-1:1 file routing — the defining capability that separates codegen from every alternative.
+- The `grouping.luau` script enables non-1:1 file routing, the defining capability that separates codegen from every alternative.
 - The LuaU sandbox makes rules safe to share and auditable.
 - The tool is self-hosted: it generates its own infrastructure using the same rule system you use.
-</Aside>
+</Alert>

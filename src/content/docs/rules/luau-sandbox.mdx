@@ -3,7 +3,7 @@ title: LuaU Sandbox
 description: What the LuaU VM provides to rule scripts, what it withholds, and how to reason about rule safety.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 codegen embeds the LuaU VM (Roblox's typed Lua variant with a JIT compiler) as the rule execution environment. Each rule invocation gets a fresh VM instance with no shared state between calls.
 
@@ -21,18 +21,18 @@ That is the complete default environment.
 
 | Capability | Status |
 |---|---|
-| File system (`io.open`, `os.execute`) | Blocked — no `io` or `os` library |
-| Network | Blocked by default — requires explicit HTTP permission in config |
-| `require` / module loading | Blocked — no module system in the sandbox |
-| Global state between invocations | Impossible — fresh VM per call |
-| Inter-rule communication | Impossible — VMs are isolated |
+| File system (`io.open`, `os.execute`) | Blocked, no `io` or `os` library |
+| Network | Blocked by default, requires explicit HTTP permission in config |
+| `require` / module loading | Blocked, no module system in the sandbox |
+| Global state between invocations | Impossible, fresh VM per call |
+| Inter-rule communication | Impossible, VMs are isolated |
 | Process spawning | Blocked |
 
 ## Why LuaU specifically
 
 - **Typed:** LuaU adds gradual typing, allowing rule authors to annotate their scripts for better IDE support.
 - **Fast:** The JIT compiler makes tight loops over large entity lists performant.
-- **Sandboxable:** The LuaU VM is designed to be embedded with a restricted environment — the default global table can be replaced entirely.
+- **Sandboxable:** The LuaU VM is designed to be embedded with a restricted environment, the default global table can be replaced entirely.
 - **Auditable:** LuaU is a small language. A non-expert can read and audit a rule script in minutes.
 
 ## Writing safe rules
@@ -64,14 +64,14 @@ permissions:
 
 The engine then injects `http.get(url) -> string` into the sandbox. Any URL not on the allowlist raises a runtime error.
 
-<Aside type="caution">
+<Alert type="warning">
 Never add a domain to the HTTP allowlist in a rule you did not write and audit yourself. An allowlisted domain gives that rule read access to your AST data.
-</Aside>
+</Alert>
 
-<Aside type="tip" title="Key Takeaways">
-- Each rule invocation gets a fresh LuaU VM — no shared state, no inter-rule communication.
+<Alert type="info" title="Key Takeaways">
+- Each rule invocation gets a fresh LuaU VM, no shared state, no inter-rule communication.
 - Default environment: `json.encode`, `json.decode`, and standard Lua libraries only.
 - No `io`, `os`, `require`, or network access by default.
 - HTTP access requires an explicit domain allowlist in `config.yaml`.
-- `error()` in a rule aborts that entity only — the engine continues.
-</Aside>
+- `error()` in a rule aborts that entity only, the engine continues.
+</Alert>

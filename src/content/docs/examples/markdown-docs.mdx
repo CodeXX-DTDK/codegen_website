@@ -1,11 +1,12 @@
 ---
 title: "Markdown Docs: N structs ⇒ 1 file"
-description: The MarkdownDocs example demonstrates fan-in grouping — consolidating annotated structs from any number of headers into a single API reference document.
+description: The MarkdownDocs example demonstrates fan-in grouping, consolidating annotated structs from any number of headers into a single API reference document.
 ---
 
-import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import { FileTree, Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
-The `MarkdownDocs` example is the clearest demonstration of codegen's grouping capability. It consolidates every annotated C++ struct — regardless of which header it lives in — into a single `api-reference.md` file. No post-processing. No shell script. The engine handles the fan-in.
+The `MarkdownDocs` example is the clearest demonstration of codegen's grouping capability. It consolidates every annotated C++ struct, regardless of which header it lives in, into a single `api-reference.md` file. No post-processing. No shell script. The engine handles the fan-in.
 
 ## What it produces
 
@@ -76,7 +77,7 @@ version: 1
 
 output:
   language: markdown
-  # No outputDirectory or outputNameTemplate — grouping.luau controls all paths.
+  # No outputDirectory or outputNameTemplate, grouping.luau controls all paths.
 ```
 
 Because grouping handles all routing, the config does not set `outputDirectory` or `outputNameTemplate`.
@@ -85,7 +86,7 @@ Because grouping handles all routing, the config does not set `outputDirectory` 
 
 ```lua title="MarkdownDocs.grouping.luau"
 -- Routes ALL matched structs into a single consolidated output file.
--- Input file topology is irrelevant — structs from any header end up here.
+-- Input file topology is irrelevant, structs from any header end up here.
 
 return function(input)
     local data = json.decode(input)
@@ -117,7 +118,7 @@ return function(input)
 end
 ```
 
-The preamble script is called **once per unique output path**. Since every entity routes to the same file, this runs exactly once — no matter how many structs are annotated.
+The preamble script is called **once per unique output path**. Since every entity routes to the same file, this runs exactly once, no matter how many structs are annotated.
 
 ### `MarkdownDocs.luau`
 
@@ -199,17 +200,17 @@ codegen \
 
 ## Extending this example
 
-**Add descriptions:** Accept a string annotation argument — `[[codegen::MarkdownDocs("Optional per-entity description")]]` — and surface it in the script via `node.annotations[1].arguments[1]`.
+**Add descriptions:** Accept a string annotation argument, `[[codegen::MarkdownDocs("Optional per-entity description")]]`, and surface it in the script via `node.annotations[1].arguments[1]`.
 
 **Sort alphabetically:** In the grouping script, sort `data.entities` by `entity.identifier.name` before building the result map. Transformation order follows the map's iteration order.
 
 **Multi-section output:** Route internal entities to `internal-api.md` and public entities to `public-api.md` by checking whether the entity's `sourceFile` contains `internal/`.
 
-<Aside type="tip" title="Key Takeaways">
-- This example demonstrates **fan-in**: N annotated structs from any number of headers → 1 output file.
+<Alert type="info" title="Key Takeaways">
+- This example demonstrates **fan-in**: N annotated structs from any number of headers ☛ 1 output file.
 - The `grouping.luau` script is the only change needed to switch from 1:1 to fan-in routing.
-- The `preamble.luau` is called once per unique output path — the engine handles deduplication.
+- The `preamble.luau` is called once per unique output path, the engine handles deduplication.
 - The transformation script is stateless: it sees one entity, returns one section. The engine assembles the file.
-- Namespace context (`node._namespaces`) is always available — no need to parse the qualified name yourself.
-- Extending the rule (sort order, conditional routing, annotation arguments) requires only LuaU changes — no recompilation, no plugin rebuild.
-</Aside>
+- Namespace context (`node._namespaces`) is always available, no need to parse the qualified name yourself.
+- Extending the rule (sort order, conditional routing, annotation arguments) requires only LuaU changes, no recompilation, no plugin rebuild.
+</Alert>

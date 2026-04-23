@@ -1,471 +1,333 @@
 ---
+import StandaloneLayout from '../layouts/StandaloneLayout.astro'
 export const prerender = false
 
-// ?success=1 is appended by Polar's success_url after checkout completes.
 const justPurchased = Astro.url.searchParams.get('success') === '1'
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Activate License — codegen</title>
-    <meta name="description" content="Validate your codegen license key and get the activation command." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<StandaloneLayout
+  title="Activate License — codegen"
+  description="Validate your codegen license key and get the activation command."
+  activeNav="activate"
+>
+  <style>
+    main {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: var(--page-space-16) var(--page-space-6) var(--page-space-24);
+    }
 
-      :root {
-        --bg:        #0f111a;
-        --bg-card:   #181b27;
-        --bg-hi:     #1e2235;
-        --border:    #2a2e42;
-        --text:      #e2e5ef;
-        --muted:     #8891b0;
-        --accent:    #7c7cff;
-        --accent-hi: #a0a0ff;
-        --green:     #4ade80;
-        --red:       #f87171;
-        --radius:    12px;
-        --sans:      system-ui, -apple-system, sans-serif;
-        --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-      }
+    /*Purchase banner */
+    .banner {
+      background: color-mix(in srgb, var(--page-success) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--page-success) 30%, transparent);
+      border-radius: var(--page-radius-xl);
+      padding: var(--page-space-4) var(--page-space-5);
+      margin-bottom: var(--page-space-8);
+      display: flex;
+      gap: var(--page-space-3);
+      align-items: flex-start;
+      font-size: var(--page-font-size-sm);
+    }
+    .banner-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .banner strong { display: block; color: var(--page-success); margin-bottom: 0.15rem; }
+    .banner p { color: var(--page-text-muted); }
 
-      @media (prefers-color-scheme: light) {
-        :root {
-          --bg:       #f8f9ff;
-          --bg-card:  #ffffff;
-          --bg-hi:    #eef0fc;
-          --border:   #d8dbee;
-          --text:     #1a1d30;
-          --muted:    #5c6080;
-          --accent:   #4b4bff;
-          --accent-hi:#6666ff;
-          --green:    #16a34a;
-          --red:      #dc2626;
-        }
-      }
+    /*Page header */
+    h1 {
+      font-size: 1.9rem;
+      font-weight: var(--page-font-weight-extrabold);
+      letter-spacing: -0.03em;
+      margin-bottom: var(--page-space-2);
+      color: var(--page-text);
+    }
+    .subtitle {
+      color: var(--page-text-muted);
+      margin-bottom: var(--page-space-10);
+      font-size: var(--page-font-size-sm);
+    }
 
-      body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--sans);
-        font-size: 16px;
-        line-height: 1.6;
-        min-height: 100vh;
-      }
+    /*Key input */
+    .input-group {
+      display: flex;
+      gap: var(--page-space-2);
+      margin-bottom: var(--page-space-4);
+    }
+    input[type="text"] {
+      flex: 1;
+      background: var(--page-bg-secondary);
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius-lg);
+      padding: 0.75rem var(--page-space-4);
+      font-size: var(--page-font-size-sm);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      color: var(--page-text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus { border-color: var(--page-accent); }
+    input[type="text"]::placeholder { color: var(--page-text-muted); font-family: var(--page-font-family); }
 
-      /* ── Nav ───────────────────────────────────────────────────── */
-      nav {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid var(--border);
-        position: sticky;
-        top: 0;
-        background: var(--bg);
-        z-index: 10;
-      }
-      .nav-logo {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text);
-        text-decoration: none;
-        letter-spacing: -0.02em;
-      }
-      .nav-logo span { color: var(--accent); }
-      nav ul { display: flex; list-style: none; gap: 2rem; }
-      nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.15s; }
-      nav a:hover { color: var(--text); }
-      nav a.active { color: var(--accent); }
+    /*Status */
+    .status-error {
+      display: none;
+      font-size: var(--page-font-size-sm);
+      color: var(--page-error);
+      margin-bottom: var(--page-space-2);
+    }
+    .status-error.visible { display: block; }
 
-      /* ── Layout ────────────────────────────────────────────────── */
-      main {
-        max-width: 580px;
-        margin: 0 auto;
-        padding: 4rem 1.5rem 6rem;
-      }
+    /*Result card */
+    #result {
+      display: none;
+      background: var(--page-bg-secondary);
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius-xl);
+      padding: var(--page-space-6) var(--page-space-8);
+      margin-top: var(--page-space-6);
+      box-shadow: var(--page-shadow-sm);
+    }
+    #result.visible { display: block; }
 
-      /* ── Purchase banner ───────────────────────────────────────── */
-      .banner {
-        background: color-mix(in srgb, var(--green) 12%, transparent);
-        border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
-        border-radius: var(--radius);
-        padding: 1rem 1.25rem;
-        margin-bottom: 2rem;
-        display: flex;
-        gap: 0.75rem;
-        align-items: flex-start;
-        font-size: 0.9rem;
-      }
-      .banner-icon { font-size: 1.2rem; flex-shrink: 0; }
-      .banner strong { display: block; color: var(--green); margin-bottom: 0.15rem; }
-      .banner p { color: var(--muted); }
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: var(--page-space-3);
+      margin-bottom: var(--page-space-6);
+    }
+    .result-email {
+      color: var(--page-text-muted);
+      font-size: var(--page-font-size-xs);
+      margin-left: auto;
+    }
 
-      /* ── Page header ───────────────────────────────────────────── */
-      h1 {
-        font-size: 1.9rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        margin-bottom: 0.5rem;
-      }
-      .subtitle {
-        color: var(--muted);
-        margin-bottom: 2.5rem;
-        font-size: 0.95rem;
-      }
+    /*CLI command block */
+    .cmd-label {
+      font-size: var(--page-font-size-xs);
+      font-weight: var(--page-font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--page-text-muted);
+      margin-bottom: var(--page-space-2);
+    }
+    .cmd-block {
+      display: flex;
+      align-items: center;
+      gap: var(--page-space-3);
+      background: var(--page-bg-tertiary);
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius-lg);
+      padding: var(--page-space-3) var(--page-space-4);
+      margin-bottom: var(--page-space-6);
+    }
+    .cmd-text {
+      flex: 1;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: var(--page-font-size-sm);
+      color: var(--page-text);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--page-border);
+      border-radius: var(--page-radius);
+      padding: 0.25rem 0.6rem;
+      font-size: var(--page-font-size-xs);
+      font-family: var(--page-font-family);
+      color: var(--page-text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { border-color: var(--page-accent); color: var(--page-text); }
+    .copy-btn.copied { border-color: var(--page-success); color: var(--page-success); }
 
-      /* ── Key input form ────────────────────────────────────────── */
-      .input-group {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-      }
-      input[type="text"] {
-        flex: 1;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        font-family: var(--mono);
-        color: var(--text);
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      input[type="text"]:focus { border-color: var(--accent); }
-      input[type="text"]::placeholder { color: var(--muted); font-family: var(--sans); }
+    /*Feature grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--page-space-2);
+      margin-top: var(--page-space-1);
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: var(--page-space-2);
+      font-size: var(--page-font-size-xs);
+      color: var(--page-text-muted);
+    }
+    .feature-item.on { color: var(--page-text-secondary); }
+    .feature-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--page-border);
+      flex-shrink: 0;
+    }
+    .feature-item.on .feature-dot { background: var(--page-success); }
 
-      button[type="submit"] {
-        background: var(--accent);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: opacity 0.15s, transform 0.1s;
-      }
-      button[type="submit"]:hover { opacity: 0.88; }
-      button[type="submit"]:active { transform: scale(0.97); }
-      button[type="submit"][aria-busy="true"] { opacity: 0.65; cursor: wait; }
+    /*Docs hint */
+    .docs-hint {
+      margin-top: var(--page-space-8);
+      font-size: var(--page-font-size-sm);
+      color: var(--page-text-muted);
+    }
+    .docs-hint a { color: var(--page-text); text-decoration: none; }
+    .docs-hint a:hover { text-decoration: underline; }
+  </style>
 
-      /* ── Status messages ───────────────────────────────────────── */
-      .status {
-        display: none;
-        font-size: 0.875rem;
-        padding: 0.5rem 0;
-        margin-bottom: 0.5rem;
-      }
-      .status.error { color: var(--red); display: block; }
-
-      /* ── Result card ───────────────────────────────────────────── */
-      #result {
-        display: none;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1.75rem;
-        margin-top: 1.5rem;
-      }
-      #result.visible { display: block; }
-
-      .result-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-      }
-      .tier-badge {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        padding: 0.2rem 0.65rem;
-        border-radius: 99px;
-        background: color-mix(in srgb, var(--accent) 15%, transparent);
-        color: var(--accent);
-        border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-      }
-      .tier-badge.professional { --accent: #7c7cff; }
-      .tier-badge.team { --accent: #a78bfa; }
-      .tier-badge.community { --accent: #60a5fa; }
-
-      .result-email {
-        color: var(--muted);
-        font-size: 0.85rem;
-        margin-left: auto;
-      }
-
-      /* ── CLI command block ─────────────────────────────────────── */
-      .cmd-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-        margin-bottom: 0.6rem;
-      }
-      .cmd-block {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: var(--bg-hi);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.85rem 1rem;
-        margin-bottom: 1.5rem;
-      }
-      .cmd-text {
-        flex: 1;
-        font-family: var(--mono);
-        font-size: 0.88rem;
-        color: var(--accent-hi);
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-      .copy-btn {
-        background: none;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 0.3rem 0.65rem;
-        font-size: 0.78rem;
-        color: var(--muted);
-        cursor: pointer;
-        transition: border-color 0.15s, color 0.15s;
-        flex-shrink: 0;
-      }
-      .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-      .copy-btn.copied { border-color: var(--green); color: var(--green); }
-
-      /* ── Feature grid ──────────────────────────────────────────── */
-      .features-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.4rem;
-        margin-top: 0.25rem;
-      }
-      .feature-item {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.82rem;
-        color: var(--muted);
-      }
-      .feature-item.on { color: var(--text); }
-      .feature-item .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--border);
-        flex-shrink: 0;
-      }
-      .feature-item.on .dot { background: var(--green); }
-
-      /* ── Docs hint ─────────────────────────────────────────────── */
-      .docs-hint {
-        margin-top: 2rem;
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-      .docs-hint a { color: var(--accent); text-decoration: none; }
-      .docs-hint a:hover { text-decoration: underline; }
-
-      /* ── Footer ────────────────────────────────────────────────── */
-      footer {
-        border-top: 1px solid var(--border);
-        text-align: center;
-        padding: 2rem;
-        font-size: 0.85rem;
-        color: var(--muted);
-        margin-top: 4rem;
-      }
-      footer a { color: var(--muted); }
-    </style>
-  </head>
-  <body>
-    <nav>
-      <a href="/" class="nav-logo">code<span>gen</span></a>
-      <ul>
-        <li><a href="/docs">Docs</a></li>
-        <li><a href="/pricing">Pricing</a></li>
-        <li><a href="/activate" class="active">Activate</a></li>
-      </ul>
-    </nav>
-
-    <main>
-      {justPurchased && (
-        <div class="banner">
-          <span class="banner-icon">🎉</span>
-          <div>
-            <strong>Purchase complete — thank you!</strong>
-            <p>Your license key has been emailed to you. Paste it below to verify and get the activation command.</p>
-          </div>
+  <main>
+    {justPurchased && (
+      <div class="banner">
+        <span class="banner-icon">🎉</span>
+        <div>
+          <strong>Purchase complete — thank you!</strong>
+          <p>Your license key has been emailed to you. Paste it below to verify and get the activation command.</p>
         </div>
-      )}
-
-      <h1>Activate your license</h1>
-      <p class="subtitle">Paste your license key to verify it and get the CLI command to run on each machine.</p>
-
-      <div id="error-msg" class="status error" role="alert" aria-live="polite"></div>
-
-      <form id="activate-form" novalidate>
-        <div class="input-group">
-          <input
-            type="text"
-            id="license-key"
-            name="key"
-            placeholder="XXXX-XXXX-XXXX-XXXX"
-            autocomplete="off"
-            autocorrect="off"
-            spellcheck="false"
-            required
-          />
-          <button type="submit" id="validate-btn">Validate</button>
-        </div>
-      </form>
-
-      <div id="result" role="region" aria-label="License details">
-        <div class="result-header">
-          <span id="tier-badge" class="tier-badge"></span>
-          <span id="result-email" class="result-email"></span>
-        </div>
-
-        <p class="cmd-label">Run this on each machine you want to activate</p>
-        <div class="cmd-block">
-          <code class="cmd-text" id="cmd-text"></code>
-          <button class="copy-btn" id="copy-btn" type="button" aria-label="Copy command">Copy</button>
-        </div>
-
-        <div id="features-grid" class="features-grid"></div>
-
-        <p class="docs-hint">
-          Need help? See the <a href="/docs/licensing/activation">Activation guide</a>
-          or the <a href="/docs/licensing/tiers">Tiers & Pricing</a> docs.
-        </p>
       </div>
-    </main>
+    )}
 
-    <footer>
-      <p>© 2025 codegen · <a href="/docs">Docs</a> · <a href="/pricing">Pricing</a></p>
-    </footer>
+    <h1>Activate your license</h1>
+    <p class="subtitle">Paste your license key to verify it and get the CLI command to run on each machine.</p>
 
-    <script>
-      const form = document.getElementById('activate-form')
-      const keyInput = document.getElementById('license-key')
-      const validateBtn = document.getElementById('validate-btn')
-      const errorMsg = document.getElementById('error-msg')
-      const result = document.getElementById('result')
-      const tierBadge = document.getElementById('tier-badge')
-      const resultEmail = document.getElementById('result-email')
-      const cmdText = document.getElementById('cmd-text')
-      const copyBtn = document.getElementById('copy-btn')
-      const featuresGrid = document.getElementById('features-grid')
+    <div id="error-msg" class="status-error" role="alert" aria-live="polite"></div>
 
-      const FEATURE_LABELS = {
-        commercialUse:      'Commercial use',
-        tuiDiffViewer:      'Interactive diff viewer',
-        vscodeDapDebugger:  'VS Code DAP debugger',
-        localPersistence:   'Local persistence',
-        cmakeIntegration:   'CMake integration',
-        sharedPreambleLibs: 'Shared preamble libs',
-        prioritySupport:    'Priority support',
+    <form id="activate-form" novalidate>
+      <div class="input-group">
+        <input
+          type="text"
+          id="license-key"
+          name="key"
+          placeholder="XXXX-XXXX-XXXX-XXXX"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+          required
+        />
+        <button type="submit" id="validate-btn" class="page-button page-button-primary page-button-md">
+          Validate
+        </button>
+      </div>
+    </form>
+
+    <div id="result" role="region" aria-label="License details">
+      <div class="result-header">
+        <span id="tier-badge" class="page-badge page-badge-default"></span>
+        <span id="result-email" class="result-email"></span>
+      </div>
+
+      <p class="cmd-label">Run this on each machine you want to activate</p>
+      <div class="cmd-block">
+        <code class="cmd-text" id="cmd-text"></code>
+        <button class="copy-btn" id="copy-btn" type="button" aria-label="Copy command">Copy</button>
+      </div>
+
+      <div id="features-grid" class="features-grid"></div>
+
+      <p class="docs-hint">
+        Need help? See the <a href="/docs/licensing/activation">Activation guide</a>
+        or the <a href="/docs/licensing/tiers">Tiers &amp; Pricing</a> docs.
+      </p>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('activate-form')!
+    const keyInput = document.getElementById('license-key') as HTMLInputElement
+    const validateBtn = document.getElementById('validate-btn') as HTMLButtonElement
+    const errorMsg = document.getElementById('error-msg')!
+    const result = document.getElementById('result')!
+    const tierBadge = document.getElementById('tier-badge')!
+    const resultEmail = document.getElementById('result-email')!
+    const cmdText = document.getElementById('cmd-text')!
+    const copyBtn = document.getElementById('copy-btn') as HTMLButtonElement
+    const featuresGrid = document.getElementById('features-grid')!
+
+    const FEATURE_LABELS: Record<string, string> = {
+      commercialUse:      'Commercial use',
+      tuiDiffViewer:      'Interactive diff viewer',
+      vscodeDapDebugger:  'VS Code DAP debugger',
+      localPersistence:   'Local persistence',
+      cmakeIntegration:   'CMake integration',
+      sharedPreambleLibs: 'Shared preamble libs',
+      prioritySupport:    'Priority support',
+    }
+
+    function setError(msg: string) {
+      errorMsg.textContent = msg
+      errorMsg.classList.add('visible')
+      result.classList.remove('visible')
+    }
+
+    function clearError() {
+      errorMsg.textContent = ''
+      errorMsg.classList.remove('visible')
+    }
+
+    function showResult(data: any) {
+      clearError()
+      const tier: string = data.tier ?? 'community'
+      tierBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1)
+      tierBadge.className = tier === 'professional' || tier === 'team'
+        ? 'page-badge page-badge-primary'
+        : 'page-badge page-badge-default'
+      resultEmail.textContent = data.email ?? ''
+      cmdText.textContent = `codegen license activate ${data.key}`
+      featuresGrid.innerHTML = Object.entries(FEATURE_LABELS)
+        .map(([key, label]) => {
+          const on = !!data.features?.[key]
+          return `<div class="feature-item ${on ? 'on' : ''}">
+            <span class="feature-dot" aria-hidden="true"></span>
+            ${label}
+          </div>`
+        })
+        .join('')
+      result.classList.add('visible')
+      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const key = keyInput.value.trim()
+      if (!key) { setError('Please enter a license key.'); return }
+
+      validateBtn.setAttribute('aria-busy', 'true')
+      validateBtn.disabled = true
+      validateBtn.textContent = 'Validating…'
+      clearError()
+
+      try {
+        const res = await fetch('/api/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setError(data.error ?? 'Validation failed. Please check your key.'); return }
+        showResult(data)
+      } catch {
+        setError('Network error — please try again.')
+      } finally {
+        validateBtn.removeAttribute('aria-busy')
+        validateBtn.disabled = false
+        validateBtn.textContent = 'Validate'
       }
+    })
 
-      function setError(msg) {
-        errorMsg.textContent = msg
-        result.classList.remove('visible')
+    copyBtn.addEventListener('click', async () => {
+      const text = cmdText.textContent ?? ''
+      try {
+        await navigator.clipboard.writeText(text)
+        copyBtn.textContent = 'Copied!'
+        copyBtn.classList.add('copied')
+        setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied') }, 2000)
+      } catch {
+        const sel = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(cmdText)
+        sel?.removeAllRanges()
+        sel?.addRange(range)
       }
-
-      function clearError() {
-        errorMsg.textContent = ''
-        errorMsg.classList.remove('error')
-      }
-
-      function showResult(data) {
-        clearError()
-
-        const tier = data.tier ?? 'community'
-        tierBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1)
-        tierBadge.className = `tier-badge ${tier}`
-
-        resultEmail.textContent = data.email ?? ''
-
-        const cmd = `codegen license activate ${data.key}`
-        cmdText.textContent = cmd
-
-        featuresGrid.innerHTML = Object.entries(FEATURE_LABELS)
-          .map(([key, label]) => {
-            const on = !!data.features?.[key]
-            return `<div class="feature-item ${on ? 'on' : ''}">
-              <span class="dot" aria-hidden="true"></span>
-              ${label}
-            </div>`
-          })
-          .join('')
-
-        result.classList.add('visible')
-        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault()
-        const key = keyInput.value.trim()
-        if (!key) {
-          setError('Please enter a license key.')
-          return
-        }
-
-        validateBtn.setAttribute('aria-busy', 'true')
-        validateBtn.disabled = true
-        validateBtn.textContent = 'Validating…'
-        clearError()
-
-        try {
-          const res = await fetch('/api/activate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key }),
-          })
-          const data = await res.json()
-
-          if (!res.ok) {
-            setError(data.error ?? 'Validation failed. Please check your key.')
-            return
-          }
-
-          showResult(data)
-        } catch {
-          setError('Network error — please try again.')
-        } finally {
-          validateBtn.removeAttribute('aria-busy')
-          validateBtn.disabled = false
-          validateBtn.textContent = 'Validate'
-        }
-      })
-
-      copyBtn.addEventListener('click', async () => {
-        const text = cmdText.textContent ?? ''
-        try {
-          await navigator.clipboard.writeText(text)
-          copyBtn.textContent = 'Copied!'
-          copyBtn.classList.add('copied')
-          setTimeout(() => {
-            copyBtn.textContent = 'Copy'
-            copyBtn.classList.remove('copied')
-          }, 2000)
-        } catch {
-          // Fallback: select the text
-          const sel = window.getSelection()
-          const range = document.createRange()
-          range.selectNodeContents(cmdText)
-          sel?.removeAllRanges()
-          sel?.addRange(range)
-        }
-      })
-    </script>
-  </body>
-</html>
+    })
+  </script>
+</StandaloneLayout>

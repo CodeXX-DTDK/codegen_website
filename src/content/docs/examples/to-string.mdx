@@ -3,7 +3,8 @@ title: "ToString: enum ⇒ switch"
 description: The built-in ToString rule generates a std::string_view toString() switch statement for every annotated C++ enum.
 ---
 
-import { Aside, Steps } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 The `ToString` example is the canonical demonstration of anchor-based triggering and inline injection. It generates a `std::string_view toString(EnumType e)` function for any enum you annotate, placing the implementation in a `.g.cpp` file and injecting the declaration back into the header.
 
@@ -18,13 +19,13 @@ enum class Color { Red, Green, Blue };
 
 The engine produces:
 
-**`include/color.h`** — anchor comment replaced by declaration:
+**`include/color.h`:** anchor comment replaced by declaration:
 ```cpp title="include/color.h (after generation)"
 std::string_view toString(Color e);
 enum class Color { Red, Green, Blue };
 ```
 
-**`generated/include/color.g.cpp`** — implementation:
+**`generated/include/color.g.cpp`:** implementation:
 ```cpp title="color.g.cpp"
 #include <string_view>
 
@@ -60,7 +61,7 @@ See the [Quick Start](/getting-started/quick-start/) for the full script listing
 - **Preamble** emits `#include <string_view>`.
 - **Transformation** collects `node.enumerators`, builds one `case` per enumerator, wraps in a switch, and returns `{ source = impl, inline = { { source = decl } } }`.
 - **Scoped vs unscoped:** `node.isScoped` controls whether case values use the `EnumName::` prefix.
-- **No grouping script** — 1:1 routing: one header → one `.g.cpp`.
+- **No grouping script:** 1:1 routing: one header ☛ one `.g.cpp`.
 
 ## Extending this rule
 
@@ -70,10 +71,10 @@ See the [Quick Start](/getting-started/quick-start/) for the full script listing
 
 **Namespace-qualified output:** Add a grouping script that routes output to `generated/<namespace>/` subdirectories.
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Anchor comments trigger rules and control inline injection site.
 - The `::qualified::EnumName` path segment sets the generated function's qualified name.
 - `node.isScoped` distinguishes `enum class` (needs `Enum::Value` prefix) from plain `enum`.
 - `node.enumerators[].value` carries explicit enumerator values as source text.
-- No grouping script → 1:1 routing. One enum, one `.g.cpp`.
-</Aside>
+- No grouping script ☛ 1:1 routing. One enum, one `.g.cpp`.
+</Alert>

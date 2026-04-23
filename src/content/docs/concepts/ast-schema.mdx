@@ -1,9 +1,9 @@
 ---
 title: The AST Schema
-description: The JSON structure your rule scripts receive — fields, node kinds, and how to navigate namespace and type information.
+description: The JSON structure your rule scripts receive, fields, node kinds, and how to navigate namespace and type information.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 Every rule script receives one AST node serialized as a JSON string. Call `json.decode(input)` to get a Lua table. This page documents the fields available on the most common node kinds.
 
@@ -96,7 +96,7 @@ local function typeName(tSig)
 end
 ```
 
-Template arguments are themselves type signature nodes — navigate them recursively.
+Template arguments are themselves type signature nodes, navigate them recursively.
 
 ## Inspecting with `jq`
 
@@ -106,9 +106,9 @@ Use the `ast-dump` tool to serialize any header to JSON and inspect it before wr
 ast-dump --mode codex --input include/color.h | jq '.entities[0]'
 ```
 
-<Aside type="tip" title="Key Takeaways">
+<Alert type="info" title="Key Takeaways">
 - Structs carry `_namespaces` (outermost-first stack), `memberVariables`, and `annotations`.
 - Enums carry `isScoped` and `enumerators[]` with optional explicit `value` as source text.
 - Member variables have a `typeSignature` with nested `templateArguments` for generic types.
 - Use `ast-dump --mode codex` to inspect the exact JSON your rule will receive before writing it.
-</Aside>
+</Alert>

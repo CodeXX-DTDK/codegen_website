@@ -1,9 +1,10 @@
 ---
 title: Grouping & Fan-in
-description: How grouping.luau scripts control output file routing — the feature that enables non-1:1 generation.
+description: How grouping.luau scripts control output file routing, the feature that enables non-1:1 generation.
 ---
 
-import { Aside, Steps } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 The `grouping.luau` script is the most powerful part of the codegen rule system. It controls the mapping from matched C++ entities to output files. Understanding it is the key to unlocking codegen's full capability.
 
@@ -11,7 +12,7 @@ The `grouping.luau` script is the most powerful part of the codegen rule system.
 
 Without a grouping script, the engine uses a default routing policy: each matched entity produces output that is written to a file derived from the input header's path. One header, one output file.
 
-For simple cases — enum-to-string functions, for example — this is correct. The `ToString` rule works this way: `color.h` produces `color.g.cpp`.
+For simple cases, enum-to-string functions, for example, this is correct. The `ToString` rule works this way: `color.h` produces `color.g.cpp`.
 
 ## The problem with 1:1
 
@@ -23,7 +24,7 @@ Or consider a TypeScript bindings manifest. One `bindings.ts`, one `export inter
 
 These are **fan-in** patterns. Many C++ entities, one output file.
 
-The inverse — **fan-out** — also exists: one entity, multiple output files (e.g., a header and a source file, or a C++ binding and a Python stub).
+The inverse, **fan-out:** also exists: one entity, multiple output files (e.g., a header and a source file, or a C++ binding and a Python stub).
 
 ## How grouping.luau works
 
@@ -54,7 +55,7 @@ The engine then:
 
 ## Fan-in: many structs, one file
 
-The `MarkdownDocs` example ships with codegen and demonstrates this pattern. Every struct annotated `[[codegen::MarkdownDocs]]` — regardless of which header it lives in — is routed to a single `api-reference.md`.
+The `MarkdownDocs` example ships with codegen and demonstrates this pattern. Every struct annotated `[[codegen::MarkdownDocs]]`, regardless of which header it lives in, is routed to a single `api-reference.md`.
 
 ```lua title="MarkdownDocs.grouping.luau"
 return function(input)
@@ -106,13 +107,13 @@ end
 
 Within a single output file, entities appear in the order they were matched. Match order follows the order of headers passed to the engine, then declaration order within each header.
 
-If you need a different order — alphabetical by struct name, for example — sort the entity list in the grouping script before assigning paths. The transformation order follows the assignment order in the returned map.
+If you need a different order, alphabetical by struct name, for example, sort the entity list in the grouping script before assigning paths. The transformation order follows the assignment order in the returned map.
 
-<Aside type="tip" title="Key Takeaways">
-- Without `grouping.luau`, routing is 1:1 (one entity → one output file derived from the input path).
-- `grouping.luau` returns a `registryId → outputPath` map, giving full control over file topology.
-- Fan-in (many entities → one file) is the primary use case: registries, manifests, consolidated docs.
-- Fan-out (one entity → multiple files) is possible by combining grouping with multi-key rule output.
-- The grouping script can inspect any entity metadata — namespace, source path, annotations — to make routing conditional.
+<Alert type="info" title="Key Takeaways">
+- Without `grouping.luau`, routing is 1:1 (one entity ☛ one output file derived from the input path).
+- `grouping.luau` returns a `registryId ☛ outputPath` map, giving full control over file topology.
+- Fan-in (many entities ☛ one file) is the primary use case: registries, manifests, consolidated docs.
+- Fan-out (one entity ☛ multiple files) is possible by combining grouping with multi-key rule output.
+- The grouping script can inspect any entity metadata, namespace, source path, annotations, to make routing conditional.
 - The preamble script is called once per unique output path, regardless of how many entities route there.
-</Aside>
+</Alert>

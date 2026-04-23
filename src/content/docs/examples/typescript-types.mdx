@@ -3,7 +3,7 @@ title: "TypeScript Types: struct ⇒ interface"
 description: The built-in TypeScriptTypes rule generates TypeScript interface declarations from annotated C++ structs, with recursive type mapping for generics.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import Alert from '@pelagornis/page/components/Alert.astro';
 
 The `TypeScriptTypes` rule demonstrates attribute-based triggering and recursive type mapping. It converts C++ structs to TypeScript `export interface` declarations, handling primitive types, `std::vector<T>`, `std::optional<T>`, `std::shared_ptr<T>`, and `std::map<K,V>` recursively.
 
@@ -70,9 +70,9 @@ return function(input)
 end
 ```
 
-<Aside type="tip" title="Key Takeaways">
-- Attribute annotation (`[[codegen::TypeScriptTypes]]`) triggers attribute-based rules — no anchor comment needed.
-- Type mapping is implemented as a recursive LuaU function — extend it by adding branches.
+<Alert type="info" title="Key Takeaways">
+- Attribute annotation (`[[codegen::TypeScriptTypes]]`) triggers attribute-based rules, no anchor comment needed.
+- Type mapping is implemented as a recursive LuaU function, extend it by adding branches.
 - The rule uses 1:1 routing by default but gains fan-in by adding a simple grouping script.
-- Unmapped C++ types pass through as-is — useful for referencing other generated interfaces.
-</Aside>
+- Unmapped C++ types pass through as-is, useful for referencing other generated interfaces.
+</Alert>
