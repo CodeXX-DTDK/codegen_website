@@ -5,7 +5,7 @@ export const prerender = false
 // Creates a Polar checkout session for the given tier and returns a redirect.
 // JSON callers receive { url } instead of a redirect.
 export const POST: APIRoute = async ({ request }) => {
-  const accessToken = process.env.POLAR_ACCESS_TOKEN
+  const accessToken = import.meta.env.POLAR_ACCESS_TOKEN
   if (!accessToken) {
     return new Response(JSON.stringify({ error: 'POLAR_ACCESS_TOKEN not set' }), {
       status: 500,
@@ -26,8 +26,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const productId =
     tier === 'team'
-      ? process.env.POLAR_PRODUCT_ID_TEAM
-      : process.env.POLAR_PRODUCT_ID_PROFESSIONAL
+      ? import.meta.env.POLAR_PRODUCT_ID_TEAM
+      : import.meta.env.POLAR_PRODUCT_ID_PROFESSIONAL
 
   if (!productId) {
     return new Response(

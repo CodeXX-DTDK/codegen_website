@@ -16,10 +16,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (!key) return json({ error: 'key required' }, 400)
 
-  const accountId = process.env.KEYGEN_ACCOUNT_ID
+  const accountId = import.meta.env.KEYGEN_ACCOUNT_ID
   if (!accountId) return json({ error: 'KEYGEN_ACCOUNT_ID not set' }, 500)
 
-  const base = process.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'
+  const base = import.meta.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'
   const url = `${base}/v1/accounts/${accountId}/licenses/actions/validate-key`
 
   let res: Response

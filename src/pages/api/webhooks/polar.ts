@@ -43,16 +43,16 @@ function verifySignature(
 
 // ── Tier resolution ───────────────────────────────────────────────────────────
 function productToTier(productId: string): Tier {
-  if (productId === process.env.POLAR_PRODUCT_ID_PROFESSIONAL) return 'professional'
-  if (productId === process.env.POLAR_PRODUCT_ID_TEAM) return 'team'
+  if (productId === import.meta.env.POLAR_PRODUCT_ID_PROFESSIONAL) return 'professional'
+  if (productId === import.meta.env.POLAR_PRODUCT_ID_TEAM) return 'team'
   return 'community'
 }
 
 function policyIdForTier(tier: Tier): string {
   const map: Record<Tier, string | undefined> = {
-    community: process.env.KEYGEN_POLICY_ID_COMMUNITY,
-    professional: process.env.KEYGEN_POLICY_ID_PROFESSIONAL,
-    team: process.env.KEYGEN_POLICY_ID_TEAM,
+    community: import.meta.env.KEYGEN_POLICY_ID_COMMUNITY,
+    professional: import.meta.env.KEYGEN_POLICY_ID_PROFESSIONAL,
+    team: import.meta.env.KEYGEN_POLICY_ID_TEAM,
   }
   const id = map[tier]
   if (!id) throw new Error(`KEYGEN_POLICY_ID_${tier.toUpperCase()} not set`)
@@ -121,7 +121,7 @@ async function handleSubscriptionActive(sub: any): Promise<void> {
 // ── Route ─────────────────────────────────────────────────────────────────────
 export const POST: APIRoute = async ({ request }) => {
   const rawBody = await request.text()
-  const secret = process.env.POLAR_WEBHOOK_SECRET
+  const secret = import.meta.env.POLAR_WEBHOOK_SECRET
 
   if (!secret) {
     console.error('[polar-webhook] POLAR_WEBHOOK_SECRET not set')

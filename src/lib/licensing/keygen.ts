@@ -1,11 +1,11 @@
 const BASE = () =>
-  `${process.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'}/v1/accounts/${process.env.KEYGEN_ACCOUNT_ID}`
+  `${import.meta.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'}/v1/accounts/${import.meta.env.KEYGEN_ACCOUNT_ID}`
 
 function adminHeaders(): Record<string, string> {
   return {
     'Content-Type': 'application/vnd.api+json',
     Accept: 'application/vnd.api+json',
-    Authorization: `Bearer ${process.env.KEYGEN_ADMIN_TOKEN}`,
+    Authorization: `Bearer ${import.meta.env.KEYGEN_TOKEN}`,
     'Keygen-Version': '1.7',
   }
 }
