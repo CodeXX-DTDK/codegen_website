@@ -8,7 +8,7 @@ description: Engine error and warning codes, what they mean and how to resolve t
 | Code | Message | Resolution |
 |---|---|---|
 | `E001` | Config file not found | Check `--config` path |
-| `E002` | Config version unsupported | Update codegen binary, config uses a newer schema |
+| `E002` | Config version unsupported | Add `version: 1` to the rule config, or update the codegen binary to support the declared version |
 | `E003` | Rule script not found | Verify script filename matches the config basename |
 | `E004` | Grouping script missing entity | Add all entity `registryId`s to the grouping output map |
 | `E005` | Grouping output path escapes output directory | Use a relative path without `..` components |

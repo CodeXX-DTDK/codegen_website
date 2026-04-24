@@ -167,8 +167,8 @@ const licenseExistsStub = (_orderId, licId = 'lic_mock_existing') => ({
 
 function tokenFilePath() {
   if (process.platform === 'win32')
-    return join(process.env.APPDATA ?? homedir(), 'codegen', 'license.token')
-  return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'codegen', 'license.token')
+    return join(process.env.APPDATA ?? homedir(), 'CodeXX', 'licensing', 'license.token')
+  return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'codexx', 'licensing', 'license.token')
 }
 
 function runBinary(...args) {
