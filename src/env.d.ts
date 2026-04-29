@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   // Keygen
   readonly KEYGEN_ACCOUNT_ID: string
   readonly KEYGEN_TOKEN: string
+  readonly KEYGEN_ENVIRONMENT: string | undefined
   readonly KEYGEN_API_BASE: string | undefined
   readonly KEYGEN_POLICY_ID_COMMUNITY: string
   readonly KEYGEN_POLICY_ID_PROFESSIONAL: string

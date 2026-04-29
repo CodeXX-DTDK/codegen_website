@@ -1,13 +1,22 @@
+// Astro+Vercel SSR: env vars may only be injected via process.env at runtime
+// (especially ones added after the first build). Read both as a safety net.
+const env = (k: string): string | undefined =>
+  (import.meta.env as Record<string, string | undefined>)[k] ?? process.env[k]
+
 const BASE = () =>
-  `${import.meta.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'}/v1/accounts/${import.meta.env.KEYGEN_ACCOUNT_ID}`
+  `${env('KEYGEN_API_BASE') ?? 'https://api.keygen.sh'}/v1/accounts/${env('KEYGEN_ACCOUNT_ID')}`
 
 function adminHeaders(): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/vnd.api+json',
     Accept: 'application/vnd.api+json',
-    Authorization: `Bearer ${import.meta.env.KEYGEN_TOKEN}`,
+    Authorization: `Bearer ${env('KEYGEN_TOKEN')}`,
     'Keygen-Version': '1.7',
   }
+  // Required for environment-scoped tokens (env-…); 401 TOKEN_INVALID without it.
+  const scope = env('KEYGEN_ENVIRONMENT')
+  if (scope) headers['Keygen-Environment'] = scope
+  return headers
 }
 
 export interface KeygenUser {
@@ -34,26 +43,37 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function upsertUser(email: string): Promise<KeygenUser> {
-  const list = await apiFetch<any>(
-    `/users?filter[email]=${encodeURIComponent(email)}&limit=1`,
-  )
-  if (list.data?.length > 0) {
-    const u = list.data[0]
+  const fetchByEmail = () =>
+    apiFetch<any>(`/users?filter[email]=${encodeURIComponent(email)}&limit=1`)
+
+  const existing = await fetchByEmail()
+  if (existing.data?.length > 0) {
+    const u = existing.data[0]
     return { id: u.id as string, email: u.attributes.email as string }
   }
 
-  const created = await apiFetch<any>('/users', {
-    method: 'POST',
-    body: JSON.stringify({
-      data: {
-        type: 'users',
-        attributes: { email, firstName: '', lastName: '' },
-      },
-    }),
-  })
-  return {
-    id: created.data.id as string,
-    email: created.data.attributes.email as string,
+  try {
+    const created = await apiFetch<any>('/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        data: { type: 'users', attributes: { email } },
+      }),
+    })
+    return {
+      id: created.data.id as string,
+      email: created.data.attributes.email as string,
+    }
+  } catch (err) {
+    // Race between concurrent webhook invocations, or pre-existing user from a prior
+    // partially-failed run: Keygen returns 422 EMAIL_TAKEN. Re-fetch and return.
+    const msg = err instanceof Error ? err.message : String(err)
+    if (!/already been taken|EMAIL_TAKEN/i.test(msg)) throw err
+    const retry = await fetchByEmail()
+    if (retry.data?.length > 0) {
+      const u = retry.data[0]
+      return { id: u.id as string, email: u.attributes.email as string }
+    }
+    throw err
   }
 }
 

@@ -22,15 +22,19 @@ export const POST: APIRoute = async ({ request }) => {
   const base = import.meta.env.KEYGEN_API_BASE ?? 'https://api.keygen.sh'
   const url = `${base}/v1/accounts/${accountId}/licenses/actions/validate-key`
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/vnd.api+json',
+    Accept: 'application/vnd.api+json',
+    'Keygen-Version': '1.7',
+  }
+  const envScope = import.meta.env.KEYGEN_ENVIRONMENT
+  if (envScope) headers['Keygen-Environment'] = envScope
+
   let res: Response
   try {
     res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/vnd.api+json',
-        Accept: 'application/vnd.api+json',
-        'Keygen-Version': '1.7',
-      },
+      headers,
       body: JSON.stringify({ meta: { key } }),
     })
   } catch {
