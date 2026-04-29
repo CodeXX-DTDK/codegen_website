@@ -11,7 +11,8 @@
     "astro": "astro",
     "test": "node dev/test-suite.mjs",
     "test:webhook": "node dev/test-suite.mjs --group W",
-    "test:cli": "node dev/test-suite.mjs --group L"
+    "test:cli": "node dev/test-suite.mjs --group L",
+    "test:live": "node dev/test-suite-live.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.38.4",

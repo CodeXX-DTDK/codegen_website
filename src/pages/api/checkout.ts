@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
   const successUrl = `${origin}/activate?success=1`
 
   // Polar checkout session creation — https://docs.polar.sh/api/reference
-  const res = await fetch('https://api.polar.sh/v1/checkouts/custom', {
+  const res = await fetch('https://api.polar.sh/v1/checkouts/', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
