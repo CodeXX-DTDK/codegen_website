@@ -65,14 +65,14 @@ const fail = (id, label, why) =>
    console.log(`  ${c.red}✗${c.reset} ${c.gray}${id}${c.reset}  ${label}\n    ${c.red}${why}${c.reset}`))
 const group = name => console.log(`\n${c.bold}${c.cyan}━━━ ${name} ${c.reset}`)
 
-// ── Webhook signing (Standard Webhooks, base64 secret) ───────────────────────
+// ── Webhook signing (matches Polar SDK: raw UTF-8 bytes of full secret) ──────
 
 function signedWebhookRequest(event, secretOverride) {
   const sec  = secretOverride ?? SECRET
   const body = JSON.stringify(event)
   const id   = `msg_${randomUUID()}`
   const ts   = String(Math.floor(Date.now() / 1000))
-  const key  = Buffer.from(sec.replace(/^(?:whsec_|polar_whs_)/, ''), 'base64')
+  const key  = Buffer.from(sec, 'utf8')
   const sig  = `v1,${createHmac('sha256', key).update(`${id}.${ts}.${body}`).digest('base64')}`
   const headers = {
     'Content-Type': 'application/json',
