@@ -46,17 +46,20 @@ function verifySignature(
 }
 
 // ── Tier resolution ───────────────────────────────────────────────────────────
+const env = (k: string): string | undefined =>
+  (import.meta.env as Record<string, string | undefined>)[k] ?? process.env[k]
+
 function productToTier(productId: string): Tier {
-  if (productId === import.meta.env.POLAR_PRODUCT_ID_PROFESSIONAL) return 'professional'
-  if (productId === import.meta.env.POLAR_PRODUCT_ID_TEAM) return 'team'
+  if (productId === env('POLAR_PRODUCT_ID_PROFESSIONAL')) return 'professional'
+  if (productId === env('POLAR_PRODUCT_ID_TEAM')) return 'team'
   return 'community'
 }
 
 function policyIdForTier(tier: Tier): string {
   const map: Record<Tier, string | undefined> = {
-    community: import.meta.env.KEYGEN_POLICY_ID_COMMUNITY,
-    professional: import.meta.env.KEYGEN_POLICY_ID_PROFESSIONAL,
-    team: import.meta.env.KEYGEN_POLICY_ID_TEAM,
+    community: env('KEYGEN_POLICY_ID_COMMUNITY'),
+    professional: env('KEYGEN_POLICY_ID_PROFESSIONAL'),
+    team: env('KEYGEN_POLICY_ID_TEAM'),
   }
   const id = map[tier]
   if (!id) throw new Error(`KEYGEN_POLICY_ID_${tier.toUpperCase()} not set`)
@@ -100,9 +103,14 @@ async function handleOrderPaid(order: any): Promise<void> {
   })
 
   console.log(`[polar-webhook] provisioned ${tier} license ${license.key} for ${email}`)
-  sendActivationEmail({ to: email, key: license.key, tier }).catch(err =>
-    console.error('[polar-webhook] activation email failed (non-fatal):', err),
-  )
+  // Must await — Vercel lambda terminates on response, killing in-flight fetches.
+  // If Resend errors, log but don't fail the webhook (license already exists).
+  try {
+    await sendActivationEmail({ to: email, key: license.key, tier })
+    console.log(`[polar-webhook] activation email sent to ${email}`)
+  } catch (err) {
+    console.error('[polar-webhook] activation email failed (non-fatal):', err)
+  }
 }
 
 async function handleOrderRefunded(order: any): Promise<void> {
@@ -138,7 +146,7 @@ async function handleSubscriptionActive(sub: any): Promise<void> {
 // ── Route ─────────────────────────────────────────────────────────────────────
 export const POST: APIRoute = async ({ request }) => {
   const rawBody = await request.text()
-  const secret = import.meta.env.POLAR_WEBHOOK_SECRET
+  const secret = env('POLAR_WEBHOOK_SECRET')
 
   if (!secret) {
     console.error('[polar-webhook] POLAR_WEBHOOK_SECRET not set')

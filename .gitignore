@@ -27,3 +27,4 @@ dev/test-private.pem
 
 # Vercel build output for deployment configuration
 .vercel
+.env*.local
