@@ -8,7 +8,6 @@ interface ImportMetaEnv {
   readonly KEYGEN_POLICY_ID_COMMUNITY: string
   readonly KEYGEN_POLICY_ID_PROFESSIONAL: string
   readonly KEYGEN_POLICY_ID_TEAM: string
-  readonly KEYGEN_ED25519_PUBLIC_KEY: string
 
   // Email
   readonly RESEND_API_KEY: string
