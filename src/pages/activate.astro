@@ -184,6 +184,7 @@ const prefillKey = Astro.url.searchParams.get('key') ?? ''
         <div>
           <strong>Purchase complete — thank you!</strong>
           <p>Your license key has been emailed to you. Paste it below to verify and get the activation command.</p>
+          <p style="margin-top:0.5rem;">Need to manage billing later? Request a one-time portal link at <a href="/portal" style="color:inherit;text-decoration:underline;">/portal</a>.</p>
         </div>
       </div>
     )}
@@ -228,7 +229,8 @@ const prefillKey = Astro.url.searchParams.get('key') ?? ''
 
       <p class="docs-hint">
         Need help? See the <a href="/docs/licensing/activation">Activation guide</a>
-        or the <a href="/docs/licensing/tiers">Tiers &amp; Pricing</a> docs.
+        or the <a href="/docs/licensing/tiers">Tiers &amp; Pricing</a> docs.<br>
+        Need to manage billing? <a href="/portal">Request a portal link →</a>
       </p>
     </div>
   </main>

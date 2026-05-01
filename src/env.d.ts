@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   // Polar
   readonly POLAR_WEBHOOK_SECRET: string
   readonly POLAR_ACCESS_TOKEN: string
+  readonly POLAR_API_BASE: string | undefined
   readonly POLAR_PRODUCT_ID_PROFESSIONAL: string
   readonly POLAR_PRODUCT_ID_TEAM: string
 }

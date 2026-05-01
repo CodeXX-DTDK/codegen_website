@@ -143,13 +143,14 @@ const currentYear = new Date().getFullYear()
         <li><a href="/"     class={activeNav === 'docs'     ? 'active' : undefined}>Docs</a></li>
         <li><a href="/pricing"  class={activeNav === 'pricing'  ? 'active' : undefined}>Pricing</a></li>
         <li><a href="/activate" class={activeNav === 'activate' ? 'active' : undefined}>Activate</a></li>
+        <li><a href="/portal"   class={activeNav === 'portal'   ? 'active' : undefined}>Portal</a></li>
       </ul>
     </nav>
 
     <slot />
 
     <footer>
-      <p>© {currentYear} codegen · <a href="/">Docs</a> · <a href="/pricing">Pricing</a></p>
+      <p>© {currentYear} codegen · <a href="/">Docs</a> · <a href="/pricing">Pricing</a> · <a href="/portal">Manage subscription</a></p>
     </footer>
   </body>
 </html>
