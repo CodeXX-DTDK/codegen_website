@@ -50,7 +50,17 @@ codegen -i ./include -a ToString --dry-run
 
 Step through `.luau` rule scripts in VS Code using the LuaU DAP server. Set breakpoints, inspect the entity payload, walk the call stack. See [VS Code DAP Debugger](/integrations/vscode-debugger/) for setup.
 
-**Today:** the runtime gate is the `LUAU_ENV_ENABLE_DEBUGGER` compile-time flag — when present, `--debug` works on any tier. The licence-tier gate ships in a future release.
+**Today:** enforced. Builds require the `LUAU_ENV_ENABLE_DEBUGGER` compile-time flag for the `--debug` flag to be exposed at all; at runtime, without the Professional flag set on the cached licence, `--debug` emits `E102` and exits.
+
+### Workspace integration (`--use-workspace`)
+
+`codegen --use-workspace` pulls include paths and preprocessor defines straight from your build system (`codexx.workspace.yaml` or `compile_commands.json`), so rules see the same translation-unit context as your compiler — no hand-maintained `-I`/`-D` lists.
+
+```sh
+codegen -i ./include -a JSONSerializable --use-workspace
+```
+
+**Today:** enforced. Without the Professional flag set on the cached licence, `--use-workspace` emits `E102` and exits — fall back to passing `-I`/`-D` manually.
 
 </Card>
 
@@ -64,11 +74,11 @@ Step through `.luau` rule scripts in VS Code using the LuaU DAP server. Set brea
 
 Everything in Professional, plus:
 
-### CMake integration
+### CMake helper package
 
 A `find_package(codegen)` config module + `codegen_rule()` helper that wires generated files into your CMake target graph, so headers re-trigger codegen automatically before compilation.
 
-**Today:** not yet shipped. Drive codegen with `add_custom_command` against the binary; see [CMake Integration](/integrations/cmake/) for the current and planned path.
+**Today:** the helper package is not yet shipped. The Professional-tier `--use-workspace` flow already pulls includes/defines from `codexx.workspace.yaml` or `compile_commands.json` automatically; drive codegen with `add_custom_command` against the binary in the meantime. See [CMake Integration](/integrations/cmake/) for the current and planned path.
 
 ### Shared preamble & grouping libraries
 
@@ -79,7 +89,7 @@ Drop reusable Lua modules into `<rulesDir>/../shared/` (for example `.codegen/sh
 
 Version-control the `shared/` directory alongside your rules; standardise output conventions across the whole codebase.
 
-**Today:** the directory is loaded unconditionally. The licence-tier gate ships in a future release.
+**Today:** enforced. Without the Team flag set on the cached licence, the engine detects `<rulesDir>/../shared/`, emits `E102`, and skips loading it (rules run with their own scripts only).
 
 ### Priority support
 
@@ -94,9 +104,10 @@ Direct response SLA. Bug reports from Team customers are triaged within one busi
 | Full rule engine | ✓ | ✓ | ✓ | — |
 | Commercial use | ✗ | ✓ | ✓ | not enforced |
 | TUI diff viewer | ✗ | ✓ | ✓ | enforced |
-| VS Code DAP debugger | ✗ | ✓ | ✓ | not enforced (compile-flag gate) |
-| CMake integration | ✗ | ✗ | ✓ | not implemented |
-| Shared `.codegen/shared/` libs | ✗ | ✗ | ✓ | not enforced |
+| VS Code DAP debugger | ✗ | ✓ | ✓ | enforced |
+| Workspace integration (`--use-workspace`) | ✗ | ✓ | ✓ | enforced |
+| CMake helper package (`find_package` + `codegen_rule()`) | ✗ | ✗ | ✓ | not implemented |
+| Shared `.codegen/shared/` libs | ✗ | ✗ | ✓ | enforced |
 | Priority support | ✗ | ✗ | ✓ | n/a |
 | **Price** | **Free** | **$7/mo** | **$24/seat/mo** | |
 

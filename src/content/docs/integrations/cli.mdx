@@ -35,7 +35,7 @@ Rules are loaded from `<rules-dir>/<RuleName>/` for each `-a` on the command lin
 |---|---|
 | `-D, --define NAME[=VALUE]` | Preprocessor define. Repeatable. |
 | `-I, --include-path <path>` | Include search path. Repeatable. |
-| `--use-workspace` | Auto-load includes and defines from a build-system config (`codexx.workspace.yaml` or CMake file-api). Default workspace root is the CWD. |
+| `--use-workspace` | Auto-load includes and defines from a build-system config (`codexx.workspace.yaml` or CMake file-api). Default workspace root is the CWD. **Requires Professional or Team licence** — emits `E102` and exits otherwise. |
 | `--workspace-dir <path>` | Override workspace root for `--use-workspace`. |
 
 When `--use-workspace` is active, includes and defines from the build-system config are merged with any explicit `-I` / `-D`. Manual `-D` flags take precedence over workspace defines (warning `W002`); inputs not found in the build-system config emit warning `W001`.

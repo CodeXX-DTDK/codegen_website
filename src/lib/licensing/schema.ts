@@ -5,6 +5,7 @@ export interface LicenseFeatures {
   tuiDiffViewer: boolean
   vscodeDapDebugger: boolean
   localPersistence: boolean
+  workspaceIntegration: boolean
   cmakeIntegration: boolean
   sharedPreambleLibs: boolean
   prioritySupport: boolean
@@ -43,6 +44,7 @@ const FEATURES_BY_TIER: Record<Tier, LicenseFeatures> = {
     tuiDiffViewer: false,
     vscodeDapDebugger: false,
     localPersistence: false,
+    workspaceIntegration: false,
     cmakeIntegration: false,
     sharedPreambleLibs: false,
     prioritySupport: false,
@@ -52,6 +54,7 @@ const FEATURES_BY_TIER: Record<Tier, LicenseFeatures> = {
     tuiDiffViewer: true,
     vscodeDapDebugger: true,
     localPersistence: true,
+    workspaceIntegration: true,
     cmakeIntegration: false,
     sharedPreambleLibs: false,
     prioritySupport: false,
@@ -61,6 +64,7 @@ const FEATURES_BY_TIER: Record<Tier, LicenseFeatures> = {
     tuiDiffViewer: true,
     vscodeDapDebugger: true,
     localPersistence: true,
+    workspaceIntegration: true,
     cmakeIntegration: true,
     sharedPreambleLibs: true,
     prioritySupport: true,
