@@ -78,7 +78,6 @@ export default defineConfig({
               label: "VS Code DAP Debugger",
               slug: "integrations/vscode-debugger",
             },
-            { label: "MCP Server", slug: "integrations/mcp-server" },
           ],
         },
         // Safety & Trust

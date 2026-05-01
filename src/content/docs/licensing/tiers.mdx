@@ -8,7 +8,9 @@ import Card from '@pelagornis/page/components/Card.astro';
 
 ## Overview
 
-codegen is available in three tiers. All tiers use the same binary and the same rule engine, the tier controls which features are unlocked, not which version of the engine you run.
+codegen is available in three tiers. All tiers use the same binary and the same rule engine — the tier controls which features are unlocked, not which version of the engine you run.
+
+Some features below are gated by the licence at run time today; others are documented as gated but the runtime gate will land in a future release. Each section flags its current enforcement status.
 
 <br/>
 
@@ -21,7 +23,7 @@ codegen is available in three tiers. All tiers use the same binary and the same 
 </Card>
 
 <Alert type="info">
-The Community tier includes the full rule engine. There are no artificial rule count limits, no watermarks in generated output, and no expiry. The only restriction is commercial use.
+The Community tier includes the full rule engine. There are no artificial rule count limits, no watermarks in generated output, and no expiry.
 </Alert>
 
 <br/>
@@ -36,29 +38,19 @@ Everything in Community, plus:
 
 ### TUI diff viewer
 
-Before codegen writes any file, the TUI diff viewer shows a side-by-side comparison of the current and proposed output. You approve or reject changes interactively. This is the `--dry-run` flag elevated to a first-class workflow.
+`codegen --dry-run` opens a side-by-side diff of the existing and proposed contents of every output file (and every inline-edit target) before anything is written. You approve or reject the apply step interactively.
 
 ```sh
-codegen --config ... --input ... --diff
+codegen -i ./include -a ToString --dry-run
 ```
 
-Catches regressions before they hit version control. Particularly valuable during rule development, when output shape is still being refined.
+**Today:** enforced. Without the Professional flag set on the cached licence, `--dry-run` emits `E102` and prints the count of would-be files instead of opening the viewer.
 
 ### VS Code DAP debugger
 
-Step through LuaU rule scripts in VS Code using the Debug Adapter Protocol. Set breakpoints in `.luau` files, inspect `node` values, and trace execution through the `json.decode` / `json.encode` boundary.
+Step through `.luau` rule scripts in VS Code using the LuaU DAP server. Set breakpoints, inspect the entity payload, walk the call stack. See [VS Code DAP Debugger](/integrations/vscode-debugger/) for setup.
 
-The debugger attaches to the running engine process. No external debug server. No port configuration. Works in any VS Code workspace that has the codegen extension installed.
-
-See [VS Code DAP Debugger](/integrations/vscode-debugger/) for setup instructions.
-
-### Local persistence
-
-The engine caches parsed AST data and rule outputs across runs. On a 200-header project, cold parse takes ~2s; subsequent runs that touch only changed files take ~80ms.
-
-Persistence is stored in `.codegen/cache/`. Add it to `.gitignore`. The cache is content-addressed and safe to delete at any time.
-
-**Value proposition:** If Professional saves you 10 minutes of debugging per month, one misgenerated file caught by the diff viewer, one rule bug stepped through in the debugger, it costs less than the time you saved.
+**Today:** the runtime gate is the `LUAU_ENV_ENABLE_DEBUGGER` compile-time flag — when present, `--debug` works on any tier. The licence-tier gate ships in a future release.
 
 </Card>
 
@@ -66,46 +58,28 @@ Persistence is stored in `.codegen/cache/`. Add it to `.gitignore`. The cache is
 
 <Card title="Team: $24 / seat / month">
 
-**For:** Engineering organizations that ship production software.
+**For:** Engineering organisations that ship production software.
 
-**License:** Per-seat, organization-managed. Seats are assigned via the team dashboard.
+**License:** Per-seat, organisation-managed. Seats are assigned via the team dashboard.
 
 Everything in Professional, plus:
 
 ### CMake integration
 
-codegen integrates as a CMake target. Generated files are listed as build outputs, triggering regeneration automatically when annotated headers change:
+A `find_package(codegen)` config module + `codegen_rule()` helper that wires generated files into your CMake target graph, so headers re-trigger codegen automatically before compilation.
 
-```cmake title="CMakeLists.txt"
-find_package(codegen REQUIRED)
+**Today:** not yet shipped. Drive codegen with `add_custom_command` against the binary; see [CMake Integration](/integrations/cmake/) for the current and planned path.
 
-codegen_rule(
-    RULE      ToString
-    CONFIG    .codegen/rules/ToString/ToString.config.yaml
-    INPUT_DIR ${CMAKE_SOURCE_DIR}/include
-    OUTPUT    ${CMAKE_BINARY_DIR}/generated
-)
+### Shared preamble & grouping libraries
 
-target_sources(mylib PRIVATE ${CODEGEN_OUTPUTS})
-```
+Drop reusable Lua modules into `<rulesDir>/../shared/` (for example `.codegen/shared/`):
 
-When a header is modified, CMake detects the dependency and re-runs the relevant rules before compiling. The "forgot to regenerate" class of CI failure is eliminated.
+- Every `.luau` file in that directory is loaded in alphabetical filename order, concatenated, and prepended to every rule's handler at execution time. Anything declared at the top level (functions, tables of constants, type maps) is therefore available to every rule without `require`.
+- A `<rulesDir>/../shared/.env` file is loaded as a baseline dotenv; per-rule `.env` entries override it.
 
-### Shared preamble and grouping libraries
+Version-control the `shared/` directory alongside your rules; standardise output conventions across the whole codebase.
 
-Teams frequently need the same grouping logic across multiple rules, e.g., "always route to the directory named after the entity's top-level namespace." The Team tier supports a `preamble_lib` and `grouping_lib` config key, pointing to shared LuaU modules that can be `require`d from any rule in the workspace:
-
-```yaml title=".codegen/rules/MyRule/MyRule.config.yaml"
-version: 1
-
-output:
-  language: cpp
-
-preamble_lib: .codegen/lib/standard_preamble.luau
-grouping_lib: .codegen/lib/namespace_routing.luau
-```
-
-Version-control these libraries alongside your rules. Code review them. Reuse them across every rule in the repo.
+**Today:** the directory is loaded unconditionally. The licence-tier gate ships in a future release.
 
 ### Priority support
 
@@ -115,33 +89,32 @@ Direct response SLA. Bug reports from Team customers are triaged within one busi
 
 ## Comparison table
 
-| Feature | Community | Professional | Team |
-|---|:---:|:---:|:---:|
-| Full rule engine | ✓ | ✓ | ✓ |
-| Commercial use | ✗ | ✓ | ✓ |
-| TUI diff viewer | ✗ | ✓ | ✓ |
-| VS Code DAP debugger | ✗ | ✓ | ✓ |
-| Local persistence / caching | ✗ | ✓ | ✓ |
-| CMake integration | ✗ | ✗ | ✓ |
-| Shared preamble/grouping libs | ✗ | ✗ | ✓ |
-| Priority support | ✗ | ✗ | ✓ |
-| **Price** | **Free** | **$7/mo** | **$24/seat/mo** |
+| Feature | Community | Professional | Team | Today's enforcement |
+|---|:---:|:---:|:---:|---|
+| Full rule engine | ✓ | ✓ | ✓ | — |
+| Commercial use | ✗ | ✓ | ✓ | not enforced |
+| TUI diff viewer | ✗ | ✓ | ✓ | enforced |
+| VS Code DAP debugger | ✗ | ✓ | ✓ | not enforced (compile-flag gate) |
+| CMake integration | ✗ | ✗ | ✓ | not implemented |
+| Shared `.codegen/shared/` libs | ✗ | ✗ | ✓ | not enforced |
+| Priority support | ✗ | ✗ | ✓ | n/a |
+| **Price** | **Free** | **$7/mo** | **$24/seat/mo** | |
 
 ---
 
 ## Frequently asked questions
 
 **Can I evaluate the Professional features before buying?**
-Yes. A 14-day trial of Professional is available from the license activation page. No credit card required.
+Yes. A 14-day trial of Professional is available from the licence activation page. No credit card required.
 
 **Does a Team seat cover the same person across multiple machines?**
-Yes. A seat is per-person, not per-machine.
+A seat covers one person, but each machine activates separately and binds the cached licence token to that machine's fingerprint. Today, transferring a licence to a different machine requires `codegen license deactivate` on the old machine and `codegen license activate <key>` on the new one.
 
 **What happens if I stop paying?**
-The engine reverts to Community-tier behavior. Your rules, configs, and generated files are unaffected.
+The engine reverts to Community-tier behaviour. Your rules, configs, and generated files are unaffected.
 
 **Is there an academic or OSS project discount?**
-OSS projects (public repository, OSI-approved license) can request a Professional license at no cost. Contact [support](mailto:example@gmail.com) with a link to your repository.
+OSS projects (public repository, OSI-approved license) can request a Professional licence at no cost. Contact [support](mailto:example@gmail.com) with a link to your repository.
 
 **Can the Team tier be used in air-gapped environments?**
-Yes. See [License Activation](/licensing/activation/) for the offline activation protocol.
+See [License Activation](/licensing/activation/).

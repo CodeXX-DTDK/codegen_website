@@ -1,15 +1,17 @@
 ---
 title: Permissions Model
-description: How to grant rules access to HTTP, and why the default is to grant nothing.
+description: How to grant rules access to HTTP, OS environment variables, and dotenv values, and why the default is to grant nothing.
 ---
 
 import Alert from '@pelagornis/page/components/Alert.astro';
 
-## Default: zero permissions
+## Default: no I/O capabilities
 
-Every rule runs with zero permissions by default. The LuaU sandbox provides only `json.encode` and `json.decode`. No filesystem, no network, no process execution.
+Every rule runs with no I/O capabilities by default. The LuaU sandbox provides `json`, the native introspection API, and a stdlib subset (see [LuaU Globals](/reference/luau-globals/)). No filesystem, no network, no env, no process execution.
 
-## Granting HTTP access
+Two opt-in capabilities can be granted in the rule's config: HTTP and env.
+
+## HTTP
 
 ```yaml title="MyRule.config.yaml"
 version: 1
@@ -21,27 +23,57 @@ permissions:
   http:
     allowlist:
       - "schema-registry.example.com"
-      - "api.example.com"
+      - "*.api.example.com"
 ```
 
-When an HTTP allowlist is present, the engine injects `http.get(url) -> string` into the sandbox. Calls to URLs not on the allowlist raise a runtime error.
+When the allowlist is non-empty, the engine exposes `http.get(url)` to all of the rule's scripts. Each entry is matched against the URL's **host component** — exact hosts (`example.com`), wildcard subdomains (`*.example.com`, which does not match the apex), or `*` for any host. Calls whose host is not on the allowlist raise an error and emit `E010`.
 
-## Future permission types
-
-The permissions model is extensible. Planned future capabilities:
-
-| Permission | Status | Description |
-|---|---|---|
-| `http` | Available | Outbound HTTP GET |
-| `fs.read` | Planned | Read-only access to specific paths |
-| `subprocess` | Not planned | Will never be added |
+The CLI flag `--allow-http <pattern>` (repeatable) appends entries at run time without editing the config.
 
 <Alert type="warning">
-Only grant HTTP permissions to rules you have written and audited. An HTTP allowlist gives that rule the ability to send your AST data to the allowlisted domain.
+Allowlist a domain only for rules you've written or audited yourself — an allowlisted host gives that rule read access to your AST data and lets it exfiltrate it. Wildcards (`*.example.com`) widen the trust boundary to anything served under the suffix; use exact hosts when you can.
 </Alert>
 
+## Env
+
+Three independent sources can populate the env capability:
+
+**OS env allowlist** — variables read directly from the host's environment:
+
+```yaml
+permissions:
+  env:
+    os_allowlist:
+      - "BUILD_CHANNEL"
+      - "GIT_COMMIT"
+```
+
+The CLI flag `--allow-env <NAME>` (repeatable) appends entries at run time.
+
+**Per-rule dotenv** at `<rulesDir>/<RuleName>/.env`. Standard format: `KEY=VALUE`, optional surrounding quotes, `#` line comments, blank lines ignored. Loaded automatically when present; no allowlist required.
+
+**Shared dotenv** at `<rulesDir>/../shared/.env` (e.g. `.codegen/shared/.env`). Loaded as a baseline; per-rule entries with the same key override.
+
+The CLI flag `--env KEY=VALUE` (repeatable) overrides individual dotenv entries at run time.
+
+The merge order, lowest precedence to highest: shared `.env` → per-rule `.env` → CLI `--env`. The CLI `--allow-env` allowlist is unioned across sources.
+
+When any of these is non-empty the engine activates the env capability and exposes the values via the env module to the rule's scripts.
+
+## What the model intentionally excludes
+
+| Capability | Status |
+|---|---|
+| Direct filesystem read | Not provided |
+| Filesystem write | Not provided (engine writes outputs; rules only return text) |
+| Process spawning | Not provided, not planned |
+| Outbound HTTP methods other than GET | Not provided |
+
+If you need data from the filesystem, point an `http.get(...)` at a local file server, or pipe it through dotenv. The sandbox is intentionally narrow.
+
 <Alert type="info" title="Key Takeaways">
-- Default: zero permissions. No way to reach the network or filesystem without explicit config.
-- HTTP access requires a named domain allowlist, there is no allow-all.
-- The permissions model is opt-in and declared in the config file, making security review straightforward: look at the config, not the script.
+- Default: no I/O. HTTP and env are opt-in via `permissions:` in the rule config.
+- HTTP allowlist entries match the URL's host (exact, `*.subdomain` wildcard, or `*` for any).
+- Env values can come from OS allowlist, per-rule `.env`, or shared `.env`; CLI flags override per-invocation.
+- Security review = read the rule's config; the script can't reach anything not declared there.
 </Alert>

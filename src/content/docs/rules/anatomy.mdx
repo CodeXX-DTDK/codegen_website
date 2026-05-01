@@ -1,26 +1,29 @@
 ---
 title: Rule Anatomy
-description: The four files that make up a codegen rule, config, preamble, grouping, and transformation, and the contract each must satisfy.
+description: The files that make up a codegen rule, config, preamble, grouping, and handler, and the contract each must satisfy.
 ---
 
 import { FileTree } from '@astrojs/starlight/components';
 import Alert from '@pelagornis/page/components/Alert.astro';
 
-A rule is a directory containing up to four files:
+A rule lives in `<rulesDir>/<RuleName>/` (the default `<rulesDir>` is `.codegen/rules`, override with `-r`). The directory contains:
 
 <FileTree>
 - .codegen/rules/RuleName/
-  - RuleName.config.yaml    **(required)** Engine configuration
-  - RuleName.luau           **(required)** Transformation script
-  - RuleName.preamble.luau  *(optional)* File header emitter
-  - RuleName.grouping.luau  *(optional)* Output path router
+  - config.yaml      **(required)** Engine configuration
+  - transform.luau   **(required)** Handler (transformation) script
+  - preamble.luau    **(required)** File header emitter
+  - grouping.luau    *(optional)* Output path router
+  - .env             *(optional)* Per-rule dotenv
 </FileTree>
 
-The directory name, the config filename, and the script filename must all match exactly, case-sensitive.
+The directory name *is* the rule name — it's how the rule is referenced on the CLI (`-a RuleName`) and as the C++ attribute (`[[codegen::RuleName]]`). Companion files are named by their *role*, not the rule, so a directory always looks the same.
 
-## `RuleName.config.yaml`
+A workspace-shared directory at `<rulesDir>/../shared/` (e.g. `.codegen/shared/`) is loaded automatically: every `.luau` file there is concatenated in alphabetical filename order and prepended to each rule's transform at execution time, and a `shared/.env` file becomes the baseline dotenv. By default every shared script is included; rules can narrow the set with `shared.include` / `shared.exclude` globs in their config (see [Config Schema Reference](/reference/config-schema/#shared)). This is the [Team-tier](/licensing/tiers/) shared-libraries feature; today the directory is loaded unconditionally and the licence gate ships in a future release.
 
-Controls engine behavior for this rule. Minimum viable config:
+## `config.yaml`
+
+Controls engine behaviour for this rule. Minimum viable config:
 
 ```yaml
 version: 1
@@ -31,55 +34,69 @@ output:
 
 Full schema: see [Config Schema Reference](/reference/config-schema/).
 
-## `RuleName.luau`
+## `transform.luau` — handler
 
-The transformation script. Receives one AST entity as JSON, returns JSON with `source` and optionally `inline`.
-
-**Contract:**
-- Input: `json.decode(input)` ☛ Lua table (one entity)
-- Output: `json.encode({ source = "...", inline = { {source="..."}, ... } })`
-- Must not raise an error on any valid entity (validate defensively)
-- Must be a pure function, no global state, no I/O
-
-## `RuleName.preamble.luau`
-
-Optional. Runs once per unique output file before any transformation output.
+Receives one matched entity as JSON, returns JSON describing the output.
 
 **Contract:**
-- Input: JSON string (currently always `"{}"`)
-- Output: raw string (not JSON), prepended to the output file verbatim
+- Input: a JSON-encoded entity payload (the codex AST node with heavy fields stripped, plus synthetic `_namespaces`, `_registryId`, and `_outputPath`, plus a `params` key copied from the rule config). Decode with `json.decode(input)`.
+- `_outputPath` is the post-grouping output path (the `defaultPath` if no grouping script exists, or the value returned by grouping).
+- Output: `json.encode({ source = "...", inline = { {source = "..."}, ... }, includes = { "<vector>", "\"my/header.h\"" } })`. The `inline` and `includes` keys are optional.
+- A Lua `error()` skips this entity, emits `E006`, and continues. An *internal* LuaU error is fatal (exit 2).
+- The script is a pure function: no I/O, no globals carried between invocations (each call gets a fresh execution).
 
-## `RuleName.grouping.luau`
+## `preamble.luau` — preamble
 
-Optional. Runs once with all matched entities. Returns a routing map.
+Required. Runs **once per unique (rule, outputFile) pair**; the result is later deduplicated by content across rules contributing to the same output file.
 
 **Contract:**
-- Input: `json.decode(input)` ☛ `{ entities: [...] }`
-- Output: `json.encode({ [registryId] = "output/path.cpp", ... })`
-- Every entity in the input must appear in the output map
-- Paths are relative to the `--output` directory
+- Input: a JSON-encoded context object: `{ language: "cpp", outputFile: "path/to/output.cpp", ruleName: "<RuleName>", params: <rule.params>, entities: [{registryId, qualifiedName, structName, namespaces, inputFile, includes}, ...] }`.
+- `entities` contains every entity the handler produced output for that's bound to this output file, with handler-emitted `includes` exposed for conditional preamble logic.
+- Output: a raw string (not JSON), prepended to the output file once per `(rule, outputFile)` pair (deduplicated by content across rules contributing to the same file). Return `""` if you don't need a preamble — but the file must still exist.
+- A Lua `error()` here aborts the entire run with `E007` (exit 1).
 
-## Rule naming and triggering
+## `grouping.luau` — grouping
 
-The rule name (directory name) controls how it is triggered:
+Optional. Runs **once per rule, before handlers fire**, with the list of candidate entities. Used to override each entity's default output path (the 1:1 routing derived from the input header).
 
-**Attribute annotation** (struct/class/enum level):
+**Contract:**
+- Input: `json.decode(input)` returns `{ params = <rule.params>, entities = [...] }`. Each entity has only the summary fields:
+  - `registryId` (integer)
+  - `qualifiedName` (string, e.g. `"app::Color"`)
+  - `structName` (string, unqualified)
+  - `namespaces` (array of strings)
+  - `inputFile` (string, the source header path)
+  - `defaultPath` (string, the 1:1 output path derived from the input header)
+- Output: `json.encode({ ["<registryId>"] = "path/to/output.cpp", ... })`. Keys are `registryId`s **stringified**; values are output paths.
+- Paths are resolved against the project root (the process working directory). A path that escapes the project root is rejected with `E005` and the entity is skipped. An entity missing from the returned map emits `E004` and is skipped. The run continues in both cases.
+
+## `.env` — per-rule dotenv
+
+Optional. Standard dotenv format (`KEY=VALUE`, `#` comments, optional surrounding quotes on the value). Loaded automatically when present; entries override the shared `<rulesDir>/../shared/.env` baseline. Surfaced to scripts via the env module when env capability is active.
+
+## Triggering a rule
+
+Two trigger mechanisms can fire a rule:
+
+**Attribute annotation** at declaration sites. Honoured for any node kind in `node_kinds` (default: `Struct` only):
+
 ```cpp
-struct [[codegen::RuleName]] MyStruct { ... };
+struct [[codegen::RuleName]] MyStruct { /* ... */ };
 ```
 
-**Anchor comment** (inline injection):
+**Anchor comment** in the source. Useful for entities the C++ grammar doesn't allow attributes on (enums, free functions in some contexts) and as the injection site for `inline` patches:
+
 ```cpp
-// [[codegen::generated::RuleName::qualified::EnumName]]
+// [[codegen::generated::RuleName::namespace::EntityName]]
 enum class MyEnum { A, B, C };
 ```
 
-The qualified path in anchor comments (`qualified::EnumName`) is passed to the script via the entity's metadata and controls the generated function's qualified name.
+The third segment of the anchor is the *qualified name* of the target entity (namespace path included). Anchors are scanned per-file and matched against the AST to find the corresponding entity. See [Inline Injection](/rules/inline-injection/) for the on-disk anchor lifecycle.
 
 <Alert type="info" title="Key Takeaways">
-- Four files: `config.yaml` (required), transformation `.luau` (required), `preamble.luau` (optional), `grouping.luau` (optional).
-- All files must use the same name prefix matching the directory name.
-- The transformation script is a pure function: JSON in, JSON out, no side effects.
-- The preamble returns a raw string (not JSON).
-- The grouping script returns a `registryId ☛ outputPath` JSON map covering every matched entity.
+- Up to five files in a rule directory: `config.yaml`, `transform.luau`, and `preamble.luau` are required; `grouping.luau` and `.env` are optional.
+- Handler is a pure function: JSON in, JSON out (`source`, optional `inline`, optional `includes`). Receives `_outputPath` (post-grouping route).
+- Preamble runs once per (rule, outputFile) pair; its return is a raw string, deduplicated by content per output file. Receives the entities bound to that file.
+- Grouping runs once per rule, before handlers, and rewrites output paths via a stringified-`registryId` map.
+- Shared scripts in `<rulesDir>/../shared/` and a shared `.env` are loaded automatically.
 </Alert>

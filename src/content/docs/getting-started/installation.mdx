@@ -52,24 +52,27 @@ See [Supply Chain](/trust/supply-chain/) for SLSA provenance and signature verif
 ## Verify the installation
 
 ```sh
-codegen --version
-# codegen 1.0.0 (linux-x86_64, LuaU 0.623)
+codegen --help
 ```
+
+Should print the option list with the `-i`, `-r`, `-a` flags and the `license` subcommand group.
 
 ## License activation
 
-The Community tier requires no activation. For Professional or Team, activate once:
+The Community tier requires no activation. For Professional or Team:
 
 ```sh
 codegen license activate <your-license-key>
-# License activated. Tier: Professional. Expires: never.
+# License activated.
+#   Tier:    Professional
+#   Email:   user@example.com
+#   Key:     XXXX-XXXX-XXXX-XXXX
 ```
 
-Activation stores a signed token locally. No subsequent internet access required.
-See [License Activation](/licensing/activation/) for offline and air-gapped options.
+Activation contacts the licence service once, verifies the response signature, and stores a signed token locally. No subsequent internet access is required while the cache TTL holds. See [License Activation](/licensing/activation/) for the cached-licence model and the air-gapped path.
 
 <Alert type="info" title="Key Takeaways">
 - Single binary. No runtime. No installer.
 - Always verify the SHA-256 checksum before running.
-- Community tier requires no activation. Professional and Team use offline-verifiable signed tokens.
+- Community tier requires no activation. Professional and Team activate once and verify offline thereafter.
 </Alert>

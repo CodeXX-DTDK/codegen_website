@@ -1,6 +1,6 @@
 ---
 title: Your First Rule
-description: Write a rule from scratch, a struct-to-JSON-serializer generator.
+description: Write a rule from scratch — a struct-to-JSON-serializer generator.
 ---
 
 import { Steps, FileTree } from '@astrojs/starlight/components';
@@ -12,7 +12,7 @@ This guide writes a new rule, `JsonSerializer`, that generates a `toJson()` func
 
 Given:
 
-```cpp title="include/config.h"
+```cpp title="include/config.hpp"
 struct [[codegen::JsonSerializer]] AppConfig {
     std::string  host;
     uint16_t     port;
@@ -20,10 +20,14 @@ struct [[codegen::JsonSerializer]] AppConfig {
 };
 ```
 
-Produce:
+Produce, alongside the header, `include/config.g.cpp`:
 
-```cpp title="generated/config.g.cpp"
+```cpp title="include/config.g.cpp"
+// Generated with Codegen - DO NOT EDIT!!!
+
 #include <nlohmann/json.hpp>
+
+#include "config.hpp"
 
 nlohmann::json toJson(const AppConfig& v) {
     return {
@@ -34,20 +38,22 @@ nlohmann::json toJson(const AppConfig& v) {
 }
 ```
 
+The `// Generated with Codegen - DO NOT EDIT!!!` banner and the `#include "config.hpp"` self-include are emitted by the engine. The rule supplies the `<nlohmann/json.hpp>` include (via the preamble) and the function body.
+
 ## Rule file layout
 
 <FileTree>
 - .codegen/rules/JsonSerializer/
-  - JsonSerializer.config.yaml
-  - JsonSerializer.preamble.luau
-  - JsonSerializer.luau
+  - config.yaml
+  - preamble.luau
+  - transform.luau
 </FileTree>
 
-No `grouping.luau`, this rule uses 1:1 routing (one struct ☛ one `.g.cpp` file).
+No `grouping.luau` — this rule uses 1:1 routing (one struct ⇒ one `.g.cpp` next to the input).
 
 ## Step 1: config
 
-```yaml title="JsonSerializer.config.yaml"
+```yaml title="config.yaml"
 version: 1
 
 output:
@@ -55,21 +61,21 @@ output:
   autoDeduceIncludes: false
 ```
 
-`autoDeduceIncludes: false` means the engine will not attempt to infer `#include` lines. The preamble handles that explicitly.
+`autoDeduceIncludes: false` means the engine will emit every `includes` entry the rule returns verbatim, without filtering against the input header's transitive include graph. We rely on the preamble for the JSON include, so there's nothing to filter anyway.
 
 ## Step 2: preamble
 
-```lua title="JsonSerializer.preamble.luau"
+```lua title="preamble.luau"
 return function(input)
     return "#include <nlohmann/json.hpp>\n\n"
 end
 ```
 
-The preamble runs once per output file. With 1:1 routing (no grouping script), "once per output file" means once per input header, which is what you want.
+The preamble runs **once per (rule, outputFile) pair**. Its result is deduplicated by content per output file at assembly time. With 1:1 routing, each output file ends up with one preamble emission of `#include <nlohmann/json.hpp>`.
 
-## Step 3: transformation
+## Step 3: handler
 
-```lua title="JsonSerializer.luau"
+```lua title="transform.luau"
 return function(input)
     local node = json.decode(input)
     if not node then error("failed to decode input") end
@@ -77,13 +83,20 @@ return function(input)
     local structName = node.identifier and node.identifier.name
     if not structName then error("struct has no name") end
 
-    -- Collect field initializer list entries
+    -- Collect field initializer-list entries
     local entries = {}
     for _, varNode in ipairs(node.memberVariables or {}) do
         if varNode.kind == "Variable" then
             local fname = varNode.identifier and varNode.identifier.name
             if fname then
                 table.insert(entries, '        {"' .. fname .. '", v.' .. fname .. '},')
+            end
+        elseif varNode.kind == "VariableGroup" then
+            for _, v in ipairs(varNode.variables or {}) do
+                local fname = v.identifier and v.identifier.name
+                if fname then
+                    table.insert(entries, '        {"' .. fname .. '", v.' .. fname .. '},')
+                end
             end
         end
     end
@@ -105,21 +118,22 @@ return function(input)
 end
 ```
 
-The `inline` list injects `decl` at the anchor site in the original header, keeping the declaration in the header and the implementation in the `.g.cpp` file.
+The `inline` list injects each item as its own `:begin]]/:end]]` block at an anchor site in the original header (if you've placed one). The qualified-name segment of the anchor is built from `node._namespaces` plus the struct name; an anchor like `// [[codegen::generated::JsonSerializer::AppConfig]]` will match this struct in the global namespace. With no anchor present in the header, the engine emits diagnostic `W003` and skips the inline injection — the `.g.cpp` is still written.
+
+The `VariableGroup` branch covers `int x, y, z;` declarations.
 
 ## Step 4: run
 
 ```sh
-codegen \
-  --config .codegen/rules/JsonSerializer/JsonSerializer.config.yaml \
-  --input ./include \
-  --output ./generated
+codegen -i ./include -r .codegen/rules -a JsonSerializer
 ```
 
+The output lands at `include/config.g.cpp`.
+
 <Alert type="info" title="Key Takeaways">
-- Every rule has three files: `config.yaml`, `preamble.luau`, and the transformation `.luau` script.
-- The transformation script receives one AST node as JSON and returns `{ source, inline }`.
-- `source` goes to the `.g.cpp` file. `inline` items are injected at anchor sites in the original header.
-- No grouping script = 1:1 routing: one annotated entity ☛ one output file derived from the input path.
-- The LuaU sandbox provides only `json.encode` and `json.decode`. All logic is explicit and auditable.
+- A rule needs three files: `config.yaml`, `preamble.luau` (required, can return `""`), and the handler `transform.luau`.
+- The handler receives one entity as JSON and returns `{ source, inline?, includes? }`.
+- `source` lands in the output file (default: next to the input header). `inline` items are injected at matching anchor comments.
+- No `grouping.luau` ⇒ 1:1 routing; one annotated entity ⇒ one output file derived from the input.
+- The LuaU sandbox provides `json`, the [native introspection API](/reference/luau-globals/), and a stdlib subset; opt-in to HTTP/env via `permissions:`.
 </Alert>

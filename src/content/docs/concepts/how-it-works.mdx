@@ -3,34 +3,31 @@ title: How It Works
 description: A top-down walkthrough of the codegen pipeline, from annotated C++ source to generated output files.
 ---
 
-import { Steps } from '@astrojs/starlight/components';
 import Alert from '@pelagornis/page/components/Alert.astro';
 
 ## The pipeline
 
 ```mermaid
 graph TD
-    Start([Annotated C++ headers]) --> FC
+    Start([Annotated C++ headers]) --> RL
 
-    FC[Files Collector] -- "Walk input directory, collect .h/.hpp files" --> PP
+    RL[Rule Loader] -- "Load config + scripts + shared/" --> PR
+    PR[Preamble Run] -- "Run each rule's preamble once, store result" --> AS
+    AS[Anchor Scan] -- "Index '// [[codegen::generated::...]]' in inputs" --> P
 
-    PP[Preprocessor] -- "Resolve includes, expand macros (light pass)" --> P
+    P[Codex Pipeline] -- "FilesCollector → Preprocess → Parse → Analyze" --> EM
 
-    P[Parser] -- "tree-sitter-cpp ☛ raw CST" --> SE
+    EM[Entity Match] -- "Walk AST, match attribute by node_kinds + collect anchor entities" --> H
 
-    SE[Source Extractor] -- "CST ☛ typed SourceNode AST" --> A
+    H[Handler] -- "Run RuleName.luau per matched entity → source / inline / includes" --> G
 
-    A[Analyzer] -- "Resolve namespaces, types, annotations" --> EM
+    G[Grouping] -- "If RuleName.grouping.luau: rewrite each entity's output path" --> CD
 
-    EM[Entity Matcher] -- "Collect entities matching the rule's annotation/anchor" --> GS
+    CD[Collision Check] -- "Non-cpp paths claimed by 2+ rules → drop" --> A
 
-    GS[Grouping Script] -- "if grouping.luau exists: Assign each entity to output path" --> PS
+    A[Assemble & Write] -- "banner + preamble (deduped) + self-include + project includes + sources" --> IE
 
-    PS[Preamble Script] -- "Emit header once per unique output path" --> TS
-
-    TS[Transform Script] -- "Emit source + inline for each entity" --> FW
-
-    FW[File Writer] -- "Write .g.cpp files, patch headers for inline injections" --> End([Output Files])
+    IE[Inline Edits] -- "Replace anchor blocks in source headers" --> End([Output Files])
 
     style Start fill:#f9f,stroke:#333,stroke-width:2px
     style End fill:#f9f,stroke:#333,stroke-width:2px
@@ -38,26 +35,30 @@ graph TD
 
 ## Key design decisions
 
-**The AST is serialized to JSON before rules see it.** Rules receive a JSON string, not a C++ object or a Clang cursor. This means:
-- Rules are pure functions: JSON in, JSON out.
-- Rules can be tested offline with a static fixture.
-- The same AST schema is exposed via the MCP server.
+**The AST is serialised to JSON before scripts see it.** Handlers receive a JSON-encoded entity payload (the codex AST node, with heavy fields stripped, plus synthetic `_namespaces`, `_registryId`, `_outputPath`, plus a `params` key copied from the rule config). This means:
 
-**Rules run in isolated LuaU VMs.** Each rule invocation gets a fresh VM with no shared state. Rules cannot communicate with each other, cannot read the filesystem, and cannot retain state between calls.
+- Scripts are pure functions: JSON in, JSON out.
+- Scripts can be tested with a static fixture, no compiler required.
+- The full docs are also published as a single plain-text bundle at [`/llms-full.txt`](/llms-full.txt) for LLM agents and offline reference.
 
-**The preamble is deduplicated by output path.** When multiple entities route to the same output file (fan-in), the engine calls the preamble once, not once per entity.
+**Each rule gets its own LuaU execution context.** Each call (preamble, handler, grouping) executes in a fresh execution; nothing carries between invocations. Rules cannot reach each other, the filesystem, or the network unless explicitly granted via `permissions:`.
 
-**Inline injection is positional.** The `inline` list items are injected at the anchor comment that triggered the rule. The anchor comment is replaced in the output header.
+**Grouping runs before handlers.** Grouping rewrites each candidate's output path using summary metadata (`registryId`, `qualifiedName`, `namespaces`, `inputFile`, `defaultPath`) — the handler hasn't run yet, so no `source` text is available. The handler then runs with the post-grouping route exposed as `_outputPath`, so it can specialise on the file it's about to land in.
+
+**Preamble runs once per `(rule, outputFile)` pair.** It receives the entities bound to that file (with their handler-emitted `includes`) so the preamble can specialise on what's actually needed. The result is deduplicated by content when the engine assembles each output file: if two rules contribute identical preambles to the same path, the text appears once.
+
+**Inline injection rewrites anchor blocks in place.** Bare anchors written by hand are expanded on first run into one paired `:begin]]/:end]]` block per `inline` item (N items ⇒ N consecutive blocks). Later runs grow or shrink the run in place to match the current item count.
 
 ## What the engine does not do
 
-- It does not parse template instantiations. It sees the template declaration.
+- It does not instantiate templates. It sees the template declaration as the codex parser produced it.
 - It does not evaluate `constexpr`. Values are represented as their source text.
-- It does not resolve cross-header type relationships beyond namespace context. Each entity is processed with the namespace stack available at the point of declaration.
+- It does not perform overload resolution. The analyzer does best-effort symbol indexing but no semantic typing.
+- It does not cache between runs. Every invocation re-parses every input under `--input` (incremental persistence is not implemented today).
 
 <Alert type="info" title="Key Takeaways">
-- The pipeline is: collect ☛ parse ☛ extract ☛ analyze ☛ match ☛ group ☛ preamble ☛ transform ☛ write.
-- Rules are pure functions over a JSON AST node. No side effects, no shared state.
-- The preamble runs once per unique output path, regardless of entity count.
-- Inline injection replaces anchor comments in the original header.
+- Pipeline: load → anchor-scan → parse + analyze → collect candidates → **grouping → handler → preamble** → assemble → inline-edits.
+- Handlers are pure functions over a JSON AST node. No side effects, no shared state. Receive `_outputPath` (post-grouping route).
+- Grouping is path-only and runs **before** handlers; it sees summary metadata + `defaultPath`, not handler output.
+- Preamble runs once per `(rule, outputFile)` pair with the bound entities; the engine dedupes by content per output file at assembly time.
 </Alert>
