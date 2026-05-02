@@ -30,30 +30,14 @@ It ships as a single binary. It calls nothing home. It runs the same on every ma
 
 </div>
 
-## What separates it from the alternatives
+## How codegen is built
 
-<CardGrid>
-  <Card title="Not Clang plugins">
-    Clang plugins require a matching compiler version, link against unstable APIs,
-    and can panic your build. codegen rules are **LuaU scripts:** no compiler coupling,
-    no ABI fragility, hot-swappable at any time.
-  </Card>
-  <Card title="Not template engines">
-    Jinja2 and Mustache are dumb string renderers. They cannot reason about your type
-    system, your namespace hierarchy, or your template arguments. codegen rules receive
-    a **fully-resolved AST node:** every type, every qualifier, every annotation.
-  </Card>
-  <Card title="Not reflection libraries">
-    Runtime reflection adds overhead and forces you to ship introspection code.
-    codegen generates **at build time**. The output is plain source. Zero runtime cost.
-    Zero dependencies added to your library.
-  </Card>
-  <Card title="Not a macro system">
-    Macros expand in-place, break debuggers, and make error messages unreadable.
-    codegen emits **separate `.g.cpp` files:** fully navigable, fully debuggable,
-    diffable in version control.
-  </Card>
-</CardGrid>
+codegen separates the problem into two clean layers:
+
+1. **Parsing** — handled by the engine. The full C++ AST is resolved and serialised to JSON, including namespaces, template arguments, member variables, enumerators, and annotations.
+2. **Transformation** — handled by you, in LuaU. Your rule receives one AST node as JSON and returns output text. The rule has no compiler coupling, no filesystem access, and no network access.
+
+This split is what makes everything below possible.
 
 ---
 
@@ -66,96 +50,43 @@ It ships as a single binary. It calls nothing home. It runs the same on every ma
     and code review tractable.
   </Card>
   <Card title="Non-1:1 generation">
-    Most generators emit one output file per input file. **codegen does not require this.**
+    Most generators emit one output file per input file. codegen does not require this.
     A `grouping.luau` script routes each matched entity to any output path — fan-in
-    dozens of structs into a single `api-reference.md`, or split entities by namespace.
-    The topology is yours to define.
+    dozens of structs into a single `api-reference.md`, a `registry.cpp`, or a sorted
+    `bindings.ts`. The topology is yours to define.
+  </Card>
+  <Card title="Cross-language generation">
+    Rules emit text. The engine does not care whether that text is C++, TypeScript,
+    Markdown, SQL, or a JSON manifest. One annotated C++ type can drive a serialiser,
+    an FFI binding, a documentation page, and a database migration — all from the
+    same source of truth.
   </Card>
   <Card title="LLM-ready AST schema">
-    The C++ AST is fully serialised as JSON before any rule sees it. This means your
-    rules are testable without a compiler, inspectable with `jq`, and the full docs
-    are also published as a single plain-text bundle at [`/llms-full.txt`](/llms-full.txt) —
-    drop it into any LLM agent for codegen-aware code intelligence.
+    The C++ AST is fully serialised as JSON before any rule sees it. Rules are testable
+    without a compiler, inspectable with `jq`, and the full docs are also published as
+    a single plain-text bundle at [`/llms-full.txt`](/llms-full.txt) — drop it into any
+    LLM agent for codegen-aware code intelligence.
+  </Card>
+  <Card title="Rules testable in isolation">
+    Feed a JSON blob to a rule, assert on the output. No compiler, no project, no fixtures.
+    The same property that makes rules LLM-friendly makes them unit-testable in seconds.
   </Card>
   <Card title="Isolated execution">
-    LuaU runs in a sandboxed VM. Rules have **no filesystem access, no network access,
-    no process spawning** — unless you explicitly grant permissions in the config.
+    LuaU runs in a sandboxed VM. Rules have no filesystem access, no network access,
+    no process spawning — unless you explicitly grant permissions in the config.
     A malicious rule in a third-party library cannot exfiltrate your source code.
   </Card>
   <Card title="Inline injection">
     Rules can emit a `source` (to a `.g.cpp` file) and an `inline` list — declarations
-    injected **back into the original header** at a designated anchor comment. Bare
-    anchors are rewritten into idempotent `:begin]] / :end]]` blocks on first run.
+    injected back into the original header at a designated anchor comment. Bare anchors
+    are rewritten into idempotent `:begin]] / :end]]` blocks on first run.
   </Card>
   <Card title="Self-hosted">
     codegen generates parts of its own infrastructure. The tool eats its own cooking,
-    which means every feature you use has already been tested against a 100k+ LoC
-    real-world codebase.
+    so every feature you use has already been exercised against a 100k+ LoC real-world
+    codebase.
   </Card>
 </CardGrid>
-
----
-
-## How it looks in practice
-
-Annotate a C++ enum with an anchor (the third segment is the entity's qualified name):
-
-```cpp title="include/color.hpp"
-namespace app {
-    enum class Color { Red, Green, Blue };
-    // [[codegen::generated::ToString::app::Color]]
-}
-```
-
-Write a LuaU rule (`transform.luau`):
-
-```lua title=".codegen/rules/ToString/transform.luau"
-return function(input)
-    local node = json.decode(input)
-    local ns = table.concat(node._namespaces or {}, "::")
-    local qual = ns ~= "" and (ns .. "::" .. node.identifier.name) or node.identifier.name
-    local prefix = node.isScoped and (qual .. "::") or ""
-
-    local cases = {}
-    for _, e in ipairs(node.enumerators or {}) do
-        table.insert(cases, '        case ' .. prefix .. e.name .. ': return "' .. e.name .. '";')
-    end
-
-    return json.encode({
-        source = "std::string_view toString(" .. qual .. " e) {\n"
-              .. "    switch (e) {\n"
-              .. table.concat(cases, "\n") .. "\n"
-              .. '        default: return "<unknown>";\n'
-              .. "    }\n}",
-        inline = { { source = "std::string_view toString(" .. qual .. " e);" } }
-    })
-end
-```
-
-Run the engine:
-
-```sh
-codegen -i ./include -r .codegen/rules -a ToString
-```
-
-Output, written to `include/color.g.cpp`:
-
-```cpp title="color.g.cpp"
-// Generated with Codegen - DO NOT EDIT!!!
-
-#include <string_view>
-
-#include "color.hpp"
-
-std::string_view toString(app::Color e) {
-    switch (e) {
-        case app::Color::Red: return "Red";
-        case app::Color::Green: return "Green";
-        case app::Color::Blue: return "Blue";
-        default: return "<unknown>";
-    }
-}
-```
 
 ---
 
