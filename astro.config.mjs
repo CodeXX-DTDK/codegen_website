@@ -5,6 +5,7 @@ import mermaid from "astro-mermaid";
 import vercel from "@astrojs/vercel";
 import pagePlugin from "@pelagornis/page";
 import starlightLlmsTxt from "starlight-llms-txt";
+import starlightVersions from "starlight-versions";
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,9 +21,22 @@ export default defineConfig({
       title: "codegen",
       description:
         "A C++ code generation engine. LuaU rules, sandboxed execution, deterministic output.",
-      plugins: [pagePlugin(), starlightLlmsTxt({exclude: ['trust/**'],})],
+      plugins: [
+        starlightVersions({
+          current: {
+            label: "0.0.1",
+          },
+          versions: [{ slug: "0.0.1" }],
+        }),
+        pagePlugin(),
+        starlightLlmsTxt({ exclude: ["trust/**"] }),
+      ],
       social: [
-        { icon: "seti:markdown", label: "llms.txt (for AI agents)", href: "/llms-full.txt" },
+        {
+          icon: "seti:markdown",
+          label: "llms.txt (for AI agents)",
+          href: "/llms-full.txt",
+        },
       ],
       components: {
         SocialIcons: "./src/components/HeaderNav.astro",
