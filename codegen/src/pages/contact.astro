@@ -5,14 +5,6 @@ export const prerender = false
 const type = Astro.url.searchParams.get('type') ?? 'general'
 
 const config = {
-  enterprise: {
-    label: 'Enterprise Inquiry',
-    heading: "Let's talk enterprise",
-    subtext:
-      "Volume pricing, self-hosted validation, custom contracts, air-gapped environments — describe what you need and we'll get back to you within one business day.",
-    placeholder: 'Your team size, environment constraints, and any specific requirements.',
-    buttonText: 'Send inquiry',
-  },
   general: {
     label: 'General',
     heading: 'Get in touch',

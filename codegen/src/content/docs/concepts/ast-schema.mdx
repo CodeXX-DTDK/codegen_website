@@ -28,7 +28,7 @@ The engine takes the codex `toJSON` output and:
   "_namespaces": ["network", "internal"],
   "memberVariables": [ /* see below */ ],
   "attributes": [
-    { "ns": "codegen", "name": "MarkdownDocs", "arguments": [] }
+    { "ns": "codegen", "name": "MarkdownDocs", "args": [] }
   ]
 }
 ```
@@ -40,7 +40,7 @@ The engine takes the codex `toJSON` output and:
 | `identifier.templateArguments` | array | Template parameter / argument nodes (if templated) |
 | `_namespaces` | string[] | Enclosing namespace stack, outermost first |
 | `memberVariables` | array | Member variable nodes (see below) |
-| `attributes` | array | C++ attributes on this declaration. Each entry has `ns`, `name`, `arguments` |
+| `attributes` | array | C++ attributes on this declaration. Each entry has `ns`, `name`, `args` |
 
 ### Building the qualified name
 

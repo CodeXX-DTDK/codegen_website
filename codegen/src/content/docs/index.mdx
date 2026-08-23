@@ -16,7 +16,11 @@ import Card from '@pelagornis/page/components/Card.astro';
 
 <div style="text-align: center; margin: 2rem 0 3rem;">
 
-**codegen** is a production-grade C++ code generation engine. You annotate C++ declarations directly in source — structs, classes, enums, free functions, aliases — and each rule declares in its YAML which AST node kinds it consumes. You write a LuaU script that receives a structured AST node as JSON and emits whatever you want — C++, TypeScript, Markdown, SQL. The engine handles the rest: parsing, scheduling, deduplication, inline injection, and file routing.
+**codegen** turns one annotated C++ declaration into as many artifacts as you need, in as many languages as you need. Annotate a struct once, and a single run emits its C++ serialiser, the matching TypeScript interface, an SQL migration, and a reference page — from one source of truth, all regenerated together when that struct changes.
+
+That fan-in is the point. Generating `toString()` for an enum is the hello-world, and if that's all you need, [`magic_enum`](https://github.com/Neargye/magic_enum) is one header and you should use it. What a header-only library can't do is route sixty annotated types across four output files in three languages, inject declarations back into the original header, or let you write the transformation as a script you can unit-test without a compiler.
+
+You write a Luau script that receives a structured AST node as JSON and returns text. The engine handles parsing, semantic analysis, scheduling, deduplication, file routing, and inline injection.
 
 It ships as a single binary. It calls nothing home. It runs the same on every machine.
 
@@ -36,10 +40,11 @@ This split is what makes everything below possible.
 ## Core capabilities
 
 <CardGrid>
-  <Card title="Deterministic output">
-    Same source ⇒ same output. Always. The engine is a pure function over your AST.
-    Generated files are stable across machines and CI runs, making diffs meaningful
-    and code review tractable.
+  <Card title="Cross-language generation">
+    Rules emit text. The engine does not care whether that text is C++, TypeScript,
+    Markdown, SQL, or a JSON manifest. One annotated C++ type can drive a serialiser,
+    an FFI binding, a documentation page, and a database migration — all from the
+    same source of truth.
   </Card>
   <Card title="Non-1:1 generation">
     Most generators emit one output file per input file. codegen does not require this.
@@ -47,11 +52,10 @@ This split is what makes everything below possible.
     dozens of structs into a single `api-reference.md`, a `registry.cpp`, or a sorted
     `bindings.ts`. The topology is yours to define.
   </Card>
-  <Card title="Cross-language generation">
-    Rules emit text. The engine does not care whether that text is C++, TypeScript,
-    Markdown, SQL, or a JSON manifest. One annotated C++ type can drive a serialiser,
-    an FFI binding, a documentation page, and a database migration — all from the
-    same source of truth.
+  <Card title="Deterministic output">
+    Same source ⇒ same output. Always. The engine is a pure function over your AST.
+    Generated files are stable across machines and CI runs, making diffs meaningful
+    and code review tractable.
   </Card>
   <Card title="LLM-ready AST schema">
     The C++ AST is fully serialised as JSON before any rule sees it. Rules are testable
@@ -89,15 +93,48 @@ This split is what makes everything below possible.
   </Card>
   <Card title="Self-hosted">
     codegen generates parts of its own infrastructure. We use it ourselves to build it,
-    so every feature you rely on has already been exercised against a 100k+ LoC
+    so every feature you rely on has already been exercised against a 150k+ LoC
     real-world codebase.
   </Card>
 </CardGrid>
 
 ---
 
+## What codegen does not do
+
+Deliberate boundaries, worth knowing before you invest in a rule:
+
+- **No template instantiation.** A rule sees the template as written. Written template
+  arguments are extracted syntactically, but no specialization is synthesised, and an
+  uninstantiated generic resolves to a `dependent` type.
+- **No `constexpr` folding.** Constant values are carried as their source text; the
+  engine never evaluates them.
+- **No overload ranking.** Overloads are indexed distinctly, but the engine will not
+  pick the single best-viable candidate for a call site the way a compiler front-end does.
+- **No self-contained parse.** Every run connects to the workspace daemon for its
+  project root. If nothing is serving that root, the run fails rather than falling back.
+
+If your generator needs to reason about instantiated templates or fold constant
+expressions, codegen is the wrong tool and will stay the wrong tool.
+
+## What about C++26 reflection?
+
+P2996 static reflection is in C++26, and for a large share of what codegen does *in
+C++* it will simply be better: it's in the language, there's no external process, and
+there are no generated files to check in.
+
+It does not cover the same ground, though. Reflection emits C++ — it cannot emit the
+TypeScript interface, the SQL migration, or the Markdown page that one annotated type
+drives here, and anything crossing out of the translation unit still needs a generator.
+And it needs a toolchain that implements it: outside experimental forks, mainstream
+compiler support is still arriving, so it isn't a 2026 answer for a codebase that has
+to build on the compilers it has today.
+
+The two aren't rivals. Reflection replaces the in-C++ half of this; the cross-language
+fan-in half doesn't go away.
+
 ## Licensing
 
-**codegen is free.** There are no tiers and no feature gates — the TUI diff viewer,
-the VS Code DAP debugger, and shared `.codegen/shared/` libraries are all available
-to everyone, on every install.
+**codegen is free, commercial use included.** No tiers, no feature gates, no activation —
+the TUI diff viewer, the VS Code DAP debugger, and shared `.codegen/shared/` libraries
+are available to everyone, on every install.

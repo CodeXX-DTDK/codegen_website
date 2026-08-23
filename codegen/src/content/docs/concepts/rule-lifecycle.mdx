@@ -36,7 +36,11 @@ For each returned key, the engine resolves the path against the project root (CW
 
 A grouping error emits `E008` and the rule's entities keep their default 1:1 paths.
 
-## Phase 6: Handler
+## Phase 6: Collision check (non-cpp only)
+
+Immediately after grouping — before any handler runs — the engine groups entities by output path. For non-cpp languages, a path claimed by two or more rules is rejected — the conflicting entities are dropped and the engine prints `error: output path '<p>' claimed by rules ...`. C++ outputs are exempt by design: stitching multiple rules' contributions into one `.g.cpp` is intended.
+
+## Phase 7: Handler
 
 For each matched entity (with updated output path if grouping fired), the engine calls `transform.luau` once:
 
@@ -48,7 +52,7 @@ output: JSON  { source = "...", inline = [{source = "..."}, ...], includes = [".
 
 The `inline` and `includes` keys are optional. A handler `error()` skips this entity and emits `E006`; the run continues. A handler internal/VM error is fatal (exit 2).
 
-## Phase 7: Preamble
+## Phase 8: Preamble
 
 For each rule, the engine runs `preamble.luau` **once per unique output file** (the pair of rule + outputPath):
 
@@ -59,11 +63,7 @@ output: string  (raw text, stored for assembly)
 
 Each entity in the `entities` array is a matching entity bound to this output file, with its handler-emitted `includes` available for conditional preamble logic. The result is held until output assembly. A preamble error aborts the whole run with `E007`.
 
-## Phase 9: Collision check (non-cpp only)
-
-The engine groups entities by output path. For non-cpp languages, a path claimed by two or more rules is rejected — the conflicting entities are dropped and the engine prints `error: output path '<p>' claimed by rules ...`. C++ outputs are exempt by design: stitching multiple rules' contributions into one `.g.cpp` is intended.
-
-## Phase 10: Assemble & write
+## Phase 9: Assemble & write
 
 For each output path:
 
@@ -75,7 +75,7 @@ For each output path:
 
 Files are written via a temp-file-and-rename pattern. Under `--dry-run`, contents are collected and emitted as a unified diff (zero context) to stdout — suitable for CI and LLM pipelines. With `--dry-run --show-tui`, the FTXUI viewer opens instead; accepting in the viewer writes the files. `--show-tui` without `--dry-run` is silently ignored.
 
-## Phase 11: Inline edits
+## Phase 10: Inline edits
 
 For each entity that returned `inline` items, the engine rewrites the source header at the matching anchor (bare or paired form). Bare anchors are expanded to the paired form on first run. See [Inline Injection](/rules/inline-injection/).
 
@@ -93,7 +93,7 @@ Under `--dry-run`, edits are collected (not applied) and shown alongside the ass
 | Inline anchor missing | Plain stderr warning, continue. |
 
 <Alert type="info" title="Key Takeaways">
-- Order: rule load → anchor scan + parse → match → **collect candidates → grouping → handler → preamble** (per output file) → assemble → inline edits.
+- Order: rule load → anchor scan + parse → match → **collect candidates → grouping → collision check → handler → preamble** (per output file) → assemble → inline edits.
 - Candidates are collected before grouping; grouping overwrites default output paths. Handler fires with post-grouping paths and emits `_outputPath`.
 - Preamble runs once per (rule, outputFile) pair and sees entities bound to that file. Handler runs once per matched entity.
 - Grouping errors fall back to default routing. Handler errors skip the entity. Preamble errors abort the whole run.

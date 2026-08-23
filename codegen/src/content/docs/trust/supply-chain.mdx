@@ -28,16 +28,19 @@ The build-time dependency tree is pinned end to end:
 
 No dependency is fetched from a mutable tag or branch. The SBOM shipped with each release (`.spdx.json`) inlines every resolved vcpkg per-port package and every `vendor/*` submodule SHA, so the bill of materials reflects exactly what was linked.
 
-## Release security gates
+## What the release pipeline actually does
 
-Before any archive is publishable, the pipeline enforces hard gates:
+Every published archive goes through these steps:
 
-- **Header allowlist** — the distributed `include/codexx/` tree may contain only public API headers; any unrecognized file blocks the release.
-- **Symbol stripping** — released binaries are checked (`nm` on Linux/macOS, `dumpbin` on Windows) against a symbol allowlist so internal symbols are not exposed.
-- **Apple Notarization** — all macOS binaries are notarized via `notarytool`.
-- **Authenticode** — all Windows binaries carry a valid Authenticode signature.
+- **Symbol stripping** — binaries are installed with `cmake --install --strip`, so internal symbols are not shipped.
+- **SPDX SBOM** — generated with Microsoft `sbom-tool`, then post-processed to inline every resolved vcpkg per-port package and every `vendor/*` submodule SHA.
+- **SHA-256 sidecar** — each archive ships a `.sha256` next to it; the SBOM gets one too.
+- **Sigstore keyless signing** — each archive is signed with `cosign` under GitHub OIDC, producing a detached `.sigstore` bundle recorded in the public Rekor transparency log.
 
-A build that fails any gate is never published.
+Two things this pipeline does **not** do yet, which you should know before trusting a binary:
+
+- **No Authenticode signature on Windows builds.** Verify the `.sigstore` bundle instead.
+- **No Apple notarization**, and no macOS archives are published at all today — macOS support is [coming soon](/getting-started/installation/). Build from source on macOS in the meantime.
 
 ## Why this shape
 
@@ -62,7 +65,7 @@ Neither control substitutes for reading the rule. Review is what raises the floo
 <Alert type="info" title="Key Takeaways">
 - Components are distributed as independently versioned, attested archives and installed through the DTDK Manager — no system package manager, no privileged install scripts.
 - Build-time dependencies are fully pinned (vcpkg ports plus vendored submodule SHAs) and enumerated in a shipped SPDX SBOM.
-- Release gates enforce a header allowlist, symbol stripping, macOS notarization, and Windows Authenticode signing.
+- Releases are stripped, SBOM'd (SPDX), checksummed, and Sigstore-signed. There is no Authenticode signature yet, and no macOS archives yet.
 - Every archive carries a SHA-256 sidecar and a Sigstore bundle; the manager verifies checksums automatically.
 - Registry rules are vendored, not resolved — reviewed at publication, sandboxed at execution, and yours to read before you run them.
 </Alert>

@@ -16,13 +16,13 @@ graph TD
 
     P[Workspace Daemon] -- "nodesWithAttribute + getAstSubtrees over the local socket" --> EM
 
-    EM[Entity Match] -- "Match attribute by node_kinds + collect anchor entities" --> H
-
-    H[Handler] -- "Run transform.luau per matched entity → source / inline / includes" --> G
+    EM[Entity Match] -- "Match attribute by node_kinds + collect anchor entities" --> G
 
     G[Grouping] -- "If grouping.luau: rewrite each entity's output path" --> CD
 
-    CD[Collision Check] -- "Non-cpp paths claimed by 2+ rules → drop" --> PR
+    CD[Collision Check] -- "Non-cpp paths claimed by 2+ rules → drop" --> H
+
+    H[Handler] -- "Run transform.luau per matched entity → source / inline / includes" --> PR
 
     PR[Preamble Run] -- "Run preamble.luau once per (rule, output file)" --> A
 
